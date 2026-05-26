@@ -2,17 +2,44 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageToggle } from "@/components/language-toggle";
 import { LogoMark } from "@/components/layout/sidebar";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
+  }
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -44,13 +71,7 @@ export default function LoginPage() {
             <h1 className="text-2xl font-semibold">{t("loginTitle")}</h1>
             <p className="mt-1 text-sm text-zinc-500">{t("loginSubtitle")}</p>
 
-            <form
-              className="mt-8 space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                router.push("/dashboard");
-              }}
-            >
+            <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                   {t("email")}
@@ -59,18 +80,35 @@ export default function LoginPage() {
                   type="email"
                   placeholder="you@example.com"
                   required
-                  defaultValue="demo@smartfinn.app"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={error ? "border-rose-500" : ""}
                 />
               </div>
               <div>
                 <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                   {t("password")}
                 </label>
-                <Input type="password" placeholder="••••••••" required />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={error ? "border-rose-500" : ""}
+                />
               </div>
-              <Button type="submit" size="lg" className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100">
-                {t("loginCta")}
-                <ArrowRight className="h-4 w-4" />
+              {error && (
+                <p className="text-sm text-rose-600">{error}</p>
+              )}
+              <Button
+                type="submit"
+                size="lg"
+                disabled={loading}
+                className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+              >
+                {loading ? tCommon("loading") : t("loginCta")}
+                {!loading && <ArrowRight className="h-4 w-4" />}
               </Button>
             </form>
 
