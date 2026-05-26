@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Sparkles, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LogoMark } from "@/components/layout/sidebar";
 import { useLocale } from "@/i18n/locale-provider";
 import { cn } from "@/lib/cn";
 
@@ -14,17 +15,15 @@ export default function OnboardingPage() {
   const { locale, setLocale } = useLocale();
 
   const options: { value: "id" | "en"; flag: string; label: string }[] = [
-    { value: "id", flag: "🇮🇩", label: tCommon("indonesian") },
-    { value: "en", flag: "🇺🇸", label: tCommon("english") },
+    { value: "id", flag: "\u{1F1EE}\u{1F1E9}", label: tCommon("indonesian") },
+    { value: "en", flag: "\u{1F1FA}\u{1F1F8}", label: tCommon("english") },
   ];
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
-            <Sparkles className="h-4 w-4" />
-          </span>
+        <div className="mb-8 flex items-center gap-2.5">
+          <LogoMark size={30} />
           <span className="text-sm font-semibold">{tCommon("appName")}</span>
         </div>
 
@@ -67,7 +66,7 @@ export default function OnboardingPage() {
 
         <Button
           size="lg"
-          className="mt-8 w-full"
+          className="mt-8 w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
           onClick={() => router.push("/dashboard")}
         >
           {t("continue")}

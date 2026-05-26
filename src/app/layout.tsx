@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "next-themes";
 import { LocaleProvider, type Locale } from "@/i18n/locale-provider";
@@ -8,6 +8,12 @@ import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -29,7 +35,7 @@ export default async function RootLayout({
   return (
     <html
       lang={initialLocale}
-      className={inter.variable}
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>

@@ -27,11 +27,31 @@ export function DailyLine({
   }));
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-        {t("dailyTrend")}
-      </h3>
-      <div className="mt-4 h-48 w-full">
+    <div className="animate-slide-up rounded-xl border border-zinc-200 bg-white p-5 shadow-[var(--shadow-sm)] dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-1 flex items-start justify-between">
+        <div>
+          <h3 className="text-[13px] font-semibold">{t("dailyTrend")}</h3>
+          <p className="text-[11px] text-zinc-400">
+            {locale === "id" ? "30 hari terakhir" : "Last 30 days"}
+          </p>
+        </div>
+        <div className="flex gap-1">
+          {["7D", "30D", "90D"].map((s, i) => (
+            <button
+              key={s}
+              className={
+                "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors " +
+                (i === 1
+                  ? "border border-zinc-200 bg-zinc-100 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300")
+              }
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 h-[200px] w-full">
         <ResponsiveContainer>
           <AreaChart
             data={chartData}
@@ -39,21 +59,23 @@ export function DailyLine({
           >
             <defs>
               <linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
                 <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="#e4e4e7" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="var(--bg-soft)" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="label"
-              stroke="#a1a1aa"
-              fontSize={11}
+              stroke="var(--ink-5)"
+              fontSize={10}
+              fontFamily="var(--font-mono)"
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#a1a1aa"
-              fontSize={11}
+              stroke="var(--ink-5)"
+              fontSize={10}
+              fontFamily="var(--font-mono)"
               tickLine={false}
               axisLine={false}
               tickFormatter={(v) => `${Math.round(v / 1000)}k`}
@@ -62,7 +84,10 @@ export function DailyLine({
               contentStyle={{
                 fontSize: 12,
                 borderRadius: 8,
-                border: "1px solid rgb(228 228 231)",
+                border: "1px solid var(--border)",
+                background: "var(--ink)",
+                color: "#fff",
+                boxShadow: "var(--shadow-md)",
               }}
               formatter={(value: number) => formatCurrency(value, locale)}
               labelFormatter={(l) => `Day ${l}`}
@@ -71,8 +96,10 @@ export function DailyLine({
               type="monotone"
               dataKey="total"
               stroke="#10b981"
-              strokeWidth={2}
+              strokeWidth={2.4}
               fill="url(#lineFill)"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </AreaChart>
         </ResponsiveContainer>

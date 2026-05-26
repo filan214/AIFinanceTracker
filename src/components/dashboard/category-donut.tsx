@@ -21,12 +21,17 @@ export function CategoryDonut({ data }: { data: Datum[] }) {
   }));
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-        {tDash("byCategory")}
-      </h3>
+    <div className="animate-slide-up rounded-xl border border-zinc-200 bg-white p-5 shadow-[var(--shadow-sm)] dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-1">
+        <h3 className="text-[13px] font-semibold">
+          {tDash("byCategory")}
+        </h3>
+        <p className="text-[11px] text-zinc-400">
+          {locale === "id" ? "Bulan ini" : "This month"}
+        </p>
+      </div>
       <div className="mt-4 flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-        <div className="h-48 w-48 shrink-0">
+        <div className="h-[160px] w-[160px] shrink-0">
           <ResponsiveContainer>
             <PieChart>
               <Pie
@@ -46,7 +51,8 @@ export function CategoryDonut({ data }: { data: Datum[] }) {
                 contentStyle={{
                   fontSize: 12,
                   borderRadius: 8,
-                  border: "1px solid rgb(228 228 231)",
+                  border: "1px solid var(--border)",
+                  boxShadow: "var(--shadow-md)",
                 }}
                 formatter={(value: number) => formatCurrency(value, locale)}
               />
@@ -58,14 +64,14 @@ export function CategoryDonut({ data }: { data: Datum[] }) {
             <li key={d.key} className="flex items-center justify-between gap-3">
               <span className="flex items-center gap-2 truncate">
                 <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  className="h-2.5 w-2.5 shrink-0 rounded"
                   style={{ background: d.fill }}
                 />
-                <span className="truncate text-zinc-700 dark:text-zinc-300">
+                <span className="truncate text-[13px] text-zinc-600 dark:text-zinc-300">
                   {d.name}
                 </span>
               </span>
-              <span className="font-mono text-xs tabular-nums text-zinc-900 dark:text-zinc-100">
+              <span className="font-mono text-xs font-medium tabular-nums">
                 {formatCurrency(d.value, locale)}
               </span>
             </li>

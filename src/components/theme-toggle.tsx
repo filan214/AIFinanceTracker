@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun, Laptop } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -12,15 +12,16 @@ export function ThemeToggle({
   className?: string;
   variant?: "inline" | "segmented";
 }) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && (theme === "dark" || (theme === "system" && resolvedTheme === "dark"));
 
   if (variant === "segmented") {
     const options: { value: string; icon: typeof Sun }[] = [
       { value: "light", icon: Sun },
       { value: "dark", icon: Moon },
-      { value: "system", icon: Laptop },
     ];
     return (
       <div
@@ -30,7 +31,7 @@ export function ThemeToggle({
         )}
       >
         {options.map(({ value, icon: Icon }) => {
-          const active = mounted && theme === value;
+          const active = mounted && (theme === value || (theme === "system" && resolvedTheme === value));
           return (
             <button
               key={value}
@@ -52,26 +53,20 @@ export function ThemeToggle({
     );
   }
 
-  const current = mounted ? theme : "system";
-  const nextTheme =
-    current === "light" ? "dark" : current === "dark" ? "system" : "light";
-
   return (
     <button
       type="button"
-      onClick={() => setTheme(nextTheme)}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
       className={cn(
         "inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
         className
       )}
       aria-label="Toggle theme"
     >
-      {current === "dark" ? (
+      {isDark ? (
         <Moon className="h-3.5 w-3.5" />
-      ) : current === "light" ? (
-        <Sun className="h-3.5 w-3.5" />
       ) : (
-        <Laptop className="h-3.5 w-3.5" />
+        <Sun className="h-3.5 w-3.5" />
       )}
     </button>
   );

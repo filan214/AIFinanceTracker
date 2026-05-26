@@ -45,7 +45,18 @@
     "feature2Body": "Monthly narrative reports and anomaly alerts so you actually know where your money goes.",
     "feature3Title": "Multi-language",
     "feature3Body": "Full Bahasa Indonesia and English support — UI, AI responses, and reports all switch instantly.",
-    "footer": "Built as a portfolio project. Free forever."
+    "footer": "Built as a portfolio project. Free forever.",
+    "mockup": {
+      "balance": "Balance",
+      "income": "Income",
+      "expense": "Expense",
+      "vsLastMonth": "vs last month",
+      "byCategory": "Top categories",
+      "recent": "Recent",
+      "aiBadge": "Smart AI",
+      "aiToastTitle": "Auto-categorized",
+      "previousMonth": "Previous month"
+    }
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -80,7 +91,13 @@
     "noTransactions": "No transactions yet",
     "addFirst": "Add your first transaction",
     "anomalyTitle": "Unusual spending detected",
-    "anomalyBody": "Your Entertainment spending is 42% higher than your 4-week average. Consider reviewing recent subscriptions."
+    "anomalyBody": "Your Entertainment spending is 42% higher than your 4-week average. Consider reviewing recent subscriptions.",
+    "availableToSave": "Available to save",
+    "insightLabel": "Quick insight",
+    "insightText": "You're spending 18% more than last month. The biggest jump is in Entertainment (+42%). Your balance is still healthy — you can still save Rp 4.8M this month if the current pace holds.",
+    "insightActionable": "Want concrete suggestions to bring Entertainment down?",
+    "askAdvisor": "Ask Advisor",
+    "learnMore": "Learn more"
   },
   "transactions": {
     "title": "Transactions",
@@ -101,7 +118,9 @@
     "fieldAmount": "Amount",
     "fieldDescription": "Description",
     "fieldDate": "Date",
-    "fieldType": "Type"
+    "fieldType": "Type",
+    "noResults": "No transactions yet",
+    "noResultsSub": "Add your first transaction to get started."
   },
   "reports": {
     "title": "Monthly reports",
@@ -132,12 +151,31 @@
     "title": "Settings",
     "subtitle": "Manage your profile and preferences.",
     "profile": "Profile",
+    "editProfile": "Edit profile",
     "preferences": "Preferences",
     "appearance": "Appearance",
+    "accentLabel": "Accent color",
+    "accentDesc": "Choose the primary color for the interface.",
+    "languageSection": "Language",
+    "languageLabel": "Interface language",
     "languageDesc": "Choose the language for the interface and AI responses.",
+    "themeLabel": "Theme",
     "themeDesc": "Light, dark, or follow system.",
+    "notifications": "Notifications",
+    "anomalyAlerts": "Anomaly alerts",
+    "anomalyAlertsDesc": "Get notified when unusual spending is detected.",
+    "monthlyReportToggle": "Monthly report",
+    "monthlyReportDesc": "Receive an AI-generated report at the start of each month.",
     "danger": "Danger zone",
+    "deleteData": "Delete all data",
+    "deleteDataDesc": "Permanently delete all your transactions and reports.",
+    "deleteBtn": "Delete",
     "logoutDesc": "Sign out of your account on this device."
+  },
+  "sidebar": {
+    "searchPlaceholder": "Search transactions...",
+    "aiTip": "Save Rp 200K this month by cutting 2 subscriptions.",
+    "seeHow": "See how"
   },
   "categories": {
     "food": "Food & Drinks",

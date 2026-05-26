@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageToggle } from "@/components/language-toggle";
+import { LogoMark } from "@/components/layout/sidebar";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -15,18 +16,16 @@ export default function RegisterPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden bg-gradient-to-br from-emerald-600 to-emerald-800 p-10 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15">
-            <Sparkles className="h-4 w-4" />
-          </span>
+      <div className="relative hidden bg-zinc-900 p-10 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="flex items-center gap-2.5">
+          <LogoMark size={30} />
           <span className="text-sm font-semibold">{tCommon("appName")}</span>
         </div>
-        <div className="space-y-3 text-emerald-50">
-          <h2 className="text-3xl font-semibold leading-tight">
+        <div className="space-y-3">
+          <h2 className="text-3xl font-semibold leading-tight text-white">
             {tCommon("tagline")}
           </h2>
-          <p className="max-w-md text-sm text-emerald-100/80">
+          <p className="max-w-md text-sm text-zinc-400">
             Free forever. No credit card. Multi-language. AI-assisted from the
             first transaction.
           </p>
@@ -37,9 +36,7 @@ export default function RegisterPage() {
       <div className="flex flex-col p-6 sm:p-10">
         <div className="flex items-center justify-between lg:hidden">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600 text-white">
-              <Sparkles className="h-4 w-4" />
-            </span>
+            <LogoMark size={28} />
             <span className="text-sm font-semibold">{tCommon("appName")}</span>
           </Link>
           <LanguageToggle variant="segmented" />
@@ -58,25 +55,26 @@ export default function RegisterPage() {
               }}
             >
               <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                   {t("name")}
                 </label>
                 <Input type="text" placeholder="Filan" required />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                   {t("email")}
                 </label>
                 <Input type="email" placeholder="you@example.com" required />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                   {t("password")}
                 </label>
                 <Input type="password" placeholder="••••••••" required />
               </div>
-              <Button type="submit" size="lg" className="w-full">
+              <Button type="submit" size="lg" className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100">
                 {t("registerCta")}
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </form>
 

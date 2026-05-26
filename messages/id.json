@@ -45,7 +45,18 @@
     "feature2Body": "Laporan naratif bulanan dan deteksi anomali biar kamu benar-benar tahu uangmu ke mana.",
     "feature3Title": "Multi-bahasa",
     "feature3Body": "Bahasa Indonesia dan English penuh — UI, respons AI, dan laporan semua berganti seketika.",
-    "footer": "Dibangun sebagai project portofolio. Gratis selamanya."
+    "footer": "Dibangun sebagai project portofolio. Gratis selamanya.",
+    "mockup": {
+      "balance": "Saldo",
+      "income": "Pemasukan",
+      "expense": "Pengeluaran",
+      "vsLastMonth": "vs bulan lalu",
+      "byCategory": "Kategori teratas",
+      "recent": "Terbaru",
+      "aiBadge": "Smart AI",
+      "aiToastTitle": "Otomatis dikategorikan",
+      "previousMonth": "Bulan lalu"
+    }
   },
   "auth": {
     "loginTitle": "Selamat datang kembali",
@@ -80,7 +91,13 @@
     "noTransactions": "Belum ada transaksi",
     "addFirst": "Tambah transaksi pertama",
     "anomalyTitle": "Pengeluaran tidak wajar terdeteksi",
-    "anomalyBody": "Pengeluaran Hiburan kamu 42% lebih tinggi dari rata-rata 4 minggu. Coba cek langganan terbaru kamu."
+    "anomalyBody": "Pengeluaran Hiburan kamu 42% lebih tinggi dari rata-rata 4 minggu. Coba cek langganan terbaru kamu.",
+    "availableToSave": "Tersisa untuk ditabung",
+    "insightLabel": "Insight cepat",
+    "insightText": "Pengeluaranmu naik 18% dari bulan lalu. Lonjakan terbesar ada di kategori Hiburan (+42%). Sisa saldo masih sehat — kamu masih bisa nabung Rp 4,8 juta bulan ini kalau pola sekarang tetap.",
+    "insightActionable": "Mau saran konkret untuk menurunkan pengeluaran Hiburan?",
+    "askAdvisor": "Tanya Advisor",
+    "learnMore": "Lihat detail"
   },
   "transactions": {
     "title": "Transaksi",
@@ -101,7 +118,9 @@
     "fieldAmount": "Jumlah",
     "fieldDescription": "Deskripsi",
     "fieldDate": "Tanggal",
-    "fieldType": "Tipe"
+    "fieldType": "Tipe",
+    "noResults": "Belum ada transaksi",
+    "noResultsSub": "Tambah transaksi pertamamu untuk memulai."
   },
   "reports": {
     "title": "Laporan bulanan",
@@ -132,12 +151,31 @@
     "title": "Pengaturan",
     "subtitle": "Atur profil dan preferensi kamu.",
     "profile": "Profil",
+    "editProfile": "Ubah profil",
     "preferences": "Preferensi",
     "appearance": "Tampilan",
+    "accentLabel": "Warna aksen",
+    "accentDesc": "Pilih warna utama untuk antarmuka.",
+    "languageSection": "Bahasa",
+    "languageLabel": "Bahasa antarmuka",
     "languageDesc": "Pilih bahasa untuk antarmuka dan respons AI.",
+    "themeLabel": "Tema",
     "themeDesc": "Terang, gelap, atau ikuti sistem.",
+    "notifications": "Notifikasi",
+    "anomalyAlerts": "Peringatan anomali",
+    "anomalyAlertsDesc": "Dapatkan notifikasi saat pengeluaran tidak wajar terdeteksi.",
+    "monthlyReportToggle": "Laporan bulanan",
+    "monthlyReportDesc": "Terima laporan AI di awal setiap bulan.",
     "danger": "Zona berbahaya",
+    "deleteData": "Hapus semua data",
+    "deleteDataDesc": "Hapus semua transaksi dan laporan secara permanen.",
+    "deleteBtn": "Hapus",
     "logoutDesc": "Keluar dari akun di perangkat ini."
+  },
+  "sidebar": {
+    "searchPlaceholder": "Cari transaksi...",
+    "aiTip": "Hemat Rp 200K bulan ini dengan kurangi 2 langganan.",
+    "seeHow": "Lihat caranya"
   },
   "categories": {
     "food": "Makanan & Minuman",

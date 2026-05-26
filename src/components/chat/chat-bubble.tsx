@@ -17,25 +17,25 @@ export function ChatBubble({
   return (
     <div
       className={cn(
-        "flex gap-3",
+        "flex gap-2.5",
         isAi ? "justify-start" : "justify-end"
       )}
     >
-      {isAi ? (
+      {isAi && (
         <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
           <Sparkles className="h-3.5 w-3.5" />
         </div>
-      ) : null}
+      )}
       <div className={cn("max-w-[80%]", isAi ? "" : "text-right")}>
-        <p className="mb-1 text-xs font-medium text-zinc-500">
+        <p className="mb-1 text-[11px] font-medium text-zinc-400">
           {isAi ? t("aiLabel") : t("youLabel")}
         </p>
         <div
           className={cn(
-            "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+            "px-4 py-2.5 text-sm leading-relaxed",
             isAi
-              ? "rounded-tl-sm bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-              : "rounded-tr-sm bg-emerald-600 text-white"
+              ? "rounded-xl rounded-tl-none bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+              : "rounded-xl rounded-tr-none bg-emerald-600 text-white"
           )}
         >
           {content}

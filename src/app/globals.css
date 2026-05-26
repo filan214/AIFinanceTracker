@@ -4,10 +4,52 @@
 
 :root {
   color-scheme: light;
+  --bg: #fafaf9;
+  --bg-soft: #f4f4f5;
+  --bg-muted: #e4e4e7;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --ink: #09090b;
+  --ink-2: #27272a;
+  --ink-3: #52525b;
+  --ink-4: #71717a;
+  --ink-5: #a1a1aa;
+  --accent: #10b981;
+  --accent-2: #059669;
+  --accent-soft: #ecfdf5;
+  --danger: #f43f5e;
+  --danger-soft: #fff1f2;
+  --amber: #f59e0b;
+  --amber-soft: #fffbeb;
+  --shadow-sm: 0 1px 2px rgba(9,9,11,0.04), 0 1px 1px rgba(9,9,11,0.03);
+  --shadow-md: 0 4px 12px -2px rgba(9,9,11,0.06), 0 2px 6px -2px rgba(9,9,11,0.04);
+  --shadow-lg: 0 24px 48px -16px rgba(9,9,11,0.16), 0 8px 16px -8px rgba(9,9,11,0.08);
 }
 
 .dark {
   color-scheme: dark;
+  --bg: #09090b;
+  --bg-soft: #18181b;
+  --bg-muted: #27272a;
+  --surface: #18181b;
+  --border: #27272a;
+  --border-strong: #3f3f46;
+  --ink: #fafafa;
+  --ink-2: #e4e4e7;
+  --ink-3: #a1a1aa;
+  --ink-4: #71717a;
+  --ink-5: #52525b;
+  --accent: #34d399;
+  --accent-2: #10b981;
+  --accent-soft: rgba(16, 185, 129, 0.15);
+  --danger: #fb7185;
+  --danger-soft: rgba(244, 63, 94, 0.15);
+  --amber: #fbbf24;
+  --amber-soft: rgba(245, 158, 11, 0.15);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px -2px rgba(0,0,0,0.3);
+  --shadow-lg: 0 24px 48px -16px rgba(0,0,0,0.5);
 }
 
 html,
@@ -16,7 +58,13 @@ body {
 }
 
 body {
-  @apply bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  font-feature-settings: "cv11", "ss01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  overflow-x: hidden;
 }
 
 ::selection {
@@ -25,4 +73,26 @@ body {
 
 *:focus-visible {
   @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-muted);
+  border-radius: 5px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+@layer utilities {
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-soft) 25%, var(--bg-muted) 50%, var(--bg-soft) 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 1.6s infinite;
+    border-radius: 6px;
+  }
 }

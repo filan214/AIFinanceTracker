@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard — Smart Finn Track</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --bg: #fafaf9;
+    --bg-soft: #f4f4f5;
+    --bg-muted: #e4e4e7;
+    --surface: #ffffff;
+    --border: #e4e4e7;
+    --border-strong: #d4d4d8;
+    --ink: #09090b;
+    --ink-2: #27272a;
+    --ink-3: #52525b;
+    --ink-4: #71717a;
+    --ink-5: #a1a1aa;
+    --accent: #10b981;
+    --accent-2: #059669;
+    --accent-soft: #ecfdf5;
+    --danger: #f43f5e;
+    --danger-soft: #fff1f2;
+    --amber: #f59e0b;
+    --amber-soft: #fffbeb;
+    --shadow-sm: 0 1px 2px rgba(9,9,11,0.04), 0 1px 1px rgba(9,9,11,0.03);
+    --shadow-md: 0 4px 12px -2px rgba(9,9,11,0.06), 0 2px 6px -2px rgba(9,9,11,0.04);
+    --shadow-lg: 0 24px 48px -16px rgba(9,9,11,0.16), 0 8px 16px -8px rgba(9,9,11,0.08);
+  }
+  html, body { background: var(--bg); margin: 0; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--ink);
+    font-feature-settings: 'cv11','ss01','ss03';
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  * { box-sizing: border-box; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; color: inherit; }
+  input, select { font-family: inherit; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulseDot { 0%,100%{ transform:scale(1); opacity:1;} 50%{ transform:scale(1.4); opacity:0.5;} }
+  @keyframes draw { from { stroke-dashoffset: 800; } to { stroke-dashoffset: 0; } }
+  @keyframes dashSeg { from { stroke-dashoffset: 999; } }
+  @keyframes shimmer { 0%{ background-position:-1000px 0; } 100%{ background-position:1000px 0; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes modalIn { from { opacity:0; transform:translateY(20px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes backdropIn { from { opacity:0; } to { opacity:1; } }
+
+  .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
+  .chart-line { stroke-dasharray: 800; animation: draw 1.8s ease-out forwards; }
+  .donut-seg { animation: dashSeg 1.0s ease-out forwards; }
+  .fade-in { animation: fadeIn 0.4s ease-out both; }
+  .slide-up { animation: slideUp 0.5s ease-out both; }
+
+  /* Focus */
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--bg-muted); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ============================================================ */
+/* TWEAKS                                                        */
+/* ============================================================ */
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "language": "id",
+  "accent": "#10b981",
+  "showAnomaly": true
+}/*EDITMODE-END*/;
+
+/* ============================================================ */
+/* COPY                                                          */
+/* ============================================================ */
+const COPY = {
+  nav: {
+    dashboard:    { id:'Dashboard',    en:'Dashboard' },
+    transactions: { id:'Transaksi',    en:'Transactions' },
+    reports:      { id:'Laporan',      en:'Reports' },
+    chat:         { id:'Chat Advisor', en:'Chat Advisor' },
+    settings:     { id:'Pengaturan',   en:'Settings' },
+  },
+  page: {
+    title:        { id:'Dashboard',    en:'Dashboard' },
+    subtitle:     { id:'Ringkasan keuanganmu bulan ini.', en:'Your finances this month at a glance.' },
+    add:          { id:'Tambah transaksi', en:'Add transaction' },
+    export:       { id:'Ekspor',       en:'Export' },
+  },
+  months: {
+    id: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+    en: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+  },
+  metrics: {
+    income:       { id:'Total Pemasukan',   en:'Total Income' },
+    expense:      { id:'Total Pengeluaran', en:'Total Expenses' },
+    balance:      { id:'Sisa Saldo',        en:'Balance' },
+    vsLastMonth:  { id:'vs bulan lalu',     en:'vs last month' },
+    saved:        { id:'Tersisa untuk ditabung', en:'Available to save' },
+  },
+  charts: {
+    byCategory:   { id:'Pengeluaran per Kategori', en:'Spending by Category' },
+    dailyTrend:   { id:'Trend Harian',             en:'Daily Trend' },
+    last30:       { id:'30 hari terakhir',         en:'Last 30 days' },
+    thisMonth:    { id:'Bulan ini',                en:'This month' },
+    of:           { id:'dari',                     en:'of' },
+  },
+  txns: {
+    title:        { id:'Transaksi Terakhir',  en:'Recent Transactions' },
+    viewAll:      { id:'Lihat semua',         en:'View all' },
+    today:        { id:'Hari ini',            en:'Today' },
+    yesterday:    { id:'Kemarin',             en:'Yesterday' },
+    empty:        { id:'Belum ada transaksi', en:'No transactions yet' },
+    emptySub:     { id:'Tambah transaksi pertamamu untuk memulai.', en:'Add your first transaction to get started.' },
+  },
+  categorizing:   { id:'AI mengkategorikan…',     en:'AI is categorizing…' },
+  anomaly: {
+    title:        { id:'Anomali terdeteksi',  en:'Anomaly detected' },
+    body:         { id:'Pengeluaran kategori Hiburan naik 42% minggu ini — terdeteksi 2 langganan baru (Netflix, Spotify). Pertimbangkan untuk meninjau ulang.',
+                    en:'Entertainment is up 42% this week — 2 new subscriptions detected (Netflix, Spotify). Consider reviewing them.' },
+    dismiss:      { id:'Tutup',               en:'Dismiss' },
+    learn:        { id:'Lihat detail',        en:'Learn more' },
+  },
+  modal: {
+    title:        { id:'Tambah transaksi', en:'Add transaction' },
+    sub:          { id:'AI akan otomatis mengkategorikan setelah disimpan.', en:'AI will auto-categorize after saving.' },
+    amount:       { id:'Jumlah',           en:'Amount' },
+    desc:         { id:'Deskripsi',        en:'Description' },
+    descPh:       { id:'mis. Kopi pagi di Kopi Tuku', en:'e.g. Morning coffee at Kopi Tuku' },
+    date:         { id:'Tanggal',          en:'Date' },
+    type:         { id:'Tipe',             en:'Type' },
+    expense:      { id:'Pengeluaran',      en:'Expense' },
+    income:       { id:'Pemasukan',        en:'Income' },
+    cancel:       { id:'Batal',            en:'Cancel' },
+    save:         { id:'Simpan',           en:'Save' },
+  },
+  insight: {
+    label:        { id:'Insight cepat', en:'Quick insight' },
+    text:         { id:'Pengeluaranmu naik 18% dari bulan lalu. Lonjakan terbesar ada di kategori Hiburan (+42%). Sisa saldo masih sehat — kamu masih bisa nabung Rp 4,8 juta bulan ini kalau pola sekarang tetap.',
+                    en:"You're spending 18% more than last month. The biggest jump is in Entertainment (+42%). Your balance is still healthy — you can still save Rp 4.8M this month if the current pace holds." },
+    actionable:   { id:'Mau saran konkret untuk menurunkan pengeluaran Hiburan?', en:'Want concrete suggestions to bring Entertainment down?' },
+    askAdvisor:   { id:'Tanya Advisor', en:'Ask Advisor' },
+  },
+  categories: {
+    food:          { id:'Makanan & Minuman',  en:'Food & Drinks' },
+    transport:     { id:'Transportasi',       en:'Transportation' },
+    entertainment: { id:'Hiburan & Rekreasi', en:'Entertainment' },
+    shopping:      { id:'Belanja & Fashion',  en:'Shopping & Fashion' },
+    bills:         { id:'Tagihan & Utilitas', en:'Bills & Utilities' },
+    health:        { id:'Kesehatan',          en:'Healthcare' },
+    education:     { id:'Pendidikan',         en:'Education' },
+    savings:       { id:'Tabungan & Investasi',en:'Savings & Investment' },
+    income:        { id:'Pemasukan',          en:'Income' },
+  },
+  categoriesShort: {
+    food:          { id:'Makanan',  en:'Food' },
+    transport:     { id:'Transport',en:'Transport' },
+    entertainment: { id:'Hiburan',  en:'Entertainment' },
+    shopping:      { id:'Belanja',  en:'Shopping' },
+    bills:         { id:'Tagihan',  en:'Bills' },
+    health:        { id:'Kesehatan',en:'Health' },
+    education:     { id:'Edukasi',  en:'Education' },
+    savings:       { id:'Tabungan', en:'Savings' },
+    income:        { id:'Pemasukan',en:'Income' },
+  },
+};
+
+const t = (key, lang) => {
+  const parts = key.split('.');
+  let n = COPY;
+  for (const p of parts) n = n?.[p];
+  if (!n) return key;
+  return n[lang] || n.en || key;
+};
+
+const fmtIDR = (n, lang, opts = {}) => {
+  const abs = Math.abs(n);
+  const sep = lang === 'id' ? '.' : ',';
+  const str = abs.toLocaleString('en-US').replace(/,/g, sep);
+  const sign = opts.signed ? (n > 0 ? '+' : n < 0 ? '−' : '') : '';
+  return sign + 'Rp ' + str;
+};
+
+const fmtIDRShort = (n) => {
+  const abs = Math.abs(n);
+  if (abs >= 1000000) return (abs / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (abs >= 1000) return (abs / 1000).toFixed(0) + 'K';
+  return abs.toString();
+};
+
+/* ============================================================ */
+/* CATEGORY COLORS                                               */
+/* ============================================================ */
+const CAT_COLORS = {
+  food:          { c:'#10b981', bg:'#ecfdf5', dot:'#10b981' },
+  transport:     { c:'#0891b2', bg:'#ecfeff', dot:'#06b6d4' },
+  entertainment: { c:'#d97706', bg:'#fffbeb', dot:'#f59e0b' },
+  shopping:      { c:'#7c3aed', bg:'#f5f3ff', dot:'#8b5cf6' },
+  bills:         { c:'#dc2626', bg:'#fef2f2', dot:'#ef4444' },
+  health:        { c:'#db2777', bg:'#fdf2f8', dot:'#ec4899' },
+  education:     { c:'#2563eb', bg:'#eff6ff', dot:'#3b82f6' },
+  savings:       { c:'#059669', bg:'#d1fae5', dot:'#059669' },
+  income:        { c:'#047857', bg:'#d1fae5', dot:'#10b981' },
+};
+
+/* ============================================================ */
+/* ICONS                                                         */
+/* ============================================================ */
+const Icon = ({ name, size = 16, stroke = 2 }) => {
+  const props = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: stroke, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  switch (name) {
+    case 'home':     return <svg {...props}><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>;
+    case 'chart':    return <svg {...props}><path d="M3 3v18h18"/><path d="M7 15l3-3 4 4 6-6"/></svg>;
+    case 'list':     return <svg {...props}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>;
+    case 'doc':      return <svg {...props}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>;
+    case 'chat':     return <svg {...props}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>;
+    case 'gear':     return <svg {...props}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>;
+    case 'plus':     return <svg {...props}><path d="M12 5v14M5 12h14"/></svg>;
+    case 'arrow':    return <svg {...props}><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
+    case 'arrowUp':  return <svg {...props}><path d="M7 17L17 7M7 7h10v10"/></svg>;
+    case 'arrowDown':return <svg {...props}><path d="M17 7L7 17M7 7v10h10"/></svg>;
+    case 'check':    return <svg {...props}><path d="M4 12l5 5L20 7"/></svg>;
+    case 'x':        return <svg {...props}><path d="M18 6L6 18M6 6l12 12"/></svg>;
+    case 'chevL':    return <svg {...props}><path d="M15 18l-6-6 6-6"/></svg>;
+    case 'chevR':    return <svg {...props}><path d="M9 18l6-6-6-6"/></svg>;
+    case 'chevD':    return <svg {...props}><path d="M6 9l6 6 6-6"/></svg>;
+    case 'search':   return <svg {...props}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>;
+    case 'bell':     return <svg {...props}><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>;
+    case 'shield':   return <svg {...props}><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/></svg>;
+    case 'spark':    return <svg {...props}><path d="M12 3l1.7 4.5L18 9.2l-4.3 1.7L12 15.4l-1.7-4.5L6 9.2l4.3-1.7z"/></svg>;
+    case 'download': return <svg {...props}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>;
+    case 'filter':   return <svg {...props}><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></svg>;
+    case 'send':     return <svg {...props}><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>;
+    case 'edit':     return <svg {...props}><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.1 2.1 0 113 3L12 15l-4 1 1-4z"/></svg>;
+    case 'trash':    return <svg {...props}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>;
+    case 'globe':    return <svg {...props}><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg>;
+    case 'piggy':    return <svg {...props}><path d="M19 12a7 7 0 11-7-7v0M16 8h.01M2 14h2M19 8l3-3M22 13l-2 1"/></svg>;
+    default: return null;
+  }
+};
+
+const CAT_ICON = {
+  food: 'spark', transport: 'arrow', entertainment: 'spark', shopping: 'spark',
+  bills: 'doc', health: 'shield', education: 'doc', savings: 'piggy', income: 'arrowUp',
+};
+
+/* ============================================================ */
+/* LOGO                                                          */
+/* ============================================================ */
+function LogoMark({ size = 30 }) {
+  const inner = Math.round(size * 0.6);
+  return (
+    <div style={{
+      width:size, height:size, borderRadius:size/3.5, background:'var(--ink)',
+      display:'flex', alignItems:'center', justifyContent:'center'
+    }}>
+      <svg width={inner} height={inner} viewBox="0 0 24 24" fill="none">
+        <path d="M4 18 L4 6 L10 14 L14 9 L20 18" stroke="var(--accent)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="20" cy="6" r="2.2" fill="var(--accent)"/>
+      </svg>
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* SEED DATA                                                     */
+/* ============================================================ */
+const SEED_TXNS = [
+  { id:1,  date:'2026-05-26', desc:{id:'Gojek ke kantor', en:'Gojek to office'}, cat:'transport', amt:-18000 },
+  { id:2,  date:'2026-05-26', desc:{id:'Kopi Tuku',       en:'Kopi Tuku coffee'}, cat:'food', amt:-32000 },
+  { id:3,  date:'2026-05-25', desc:{id:'Netflix bulanan', en:'Netflix subscription'}, cat:'entertainment', amt:-65000 },
+  { id:4,  date:'2026-05-25', desc:{id:'Indomaret belanja', en:'Indomaret groceries'}, cat:'shopping', amt:-127000 },
+  { id:5,  date:'2026-05-24', desc:{id:'Bensin motor', en:'Motorbike fuel'}, cat:'transport', amt:-50000 },
+  { id:6,  date:'2026-05-24', desc:{id:'Spotify Premium', en:'Spotify Premium'}, cat:'entertainment', amt:-54000 },
+  { id:7,  date:'2026-05-23', desc:{id:'Makan siang Padang', en:'Padang lunch'}, cat:'food', amt:-28000 },
+  { id:8,  date:'2026-05-22', desc:{id:'Listrik PLN', en:'PLN electricity'}, cat:'bills', amt:-228000 },
+  { id:9,  date:'2026-05-21', desc:{id:'Tokopedia headphone', en:'Tokopedia headphones'}, cat:'shopping', amt:-253000 },
+  { id:10, date:'2026-05-15', desc:{id:'Gaji Mei', en:'May salary'}, cat:'income', amt:7200000 },
+  { id:11, date:'2026-05-12', desc:{id:'Bioskop CGV', en:'CGV cinema'}, cat:'entertainment', amt:-90000 },
+  { id:12, date:'2026-05-10', desc:{id:'Obat apotek', en:'Pharmacy meds'}, cat:'health', amt:-45000 },
+];
+
+/* ============================================================ */
+/* TWEAKS HOOK                                                   */
+/* ============================================================ */
+function useTweaks(defaults) {
+  const [state, setState] = useState(defaults);
+  const setTweak = (k, v) => {
+    setState(prev => {
+      const next = typeof k === 'object' ? { ...prev, ...k } : { ...prev, [k]: v };
+      window.parent.postMessage({ type:'__edit_mode_set_keys', edits: next }, '*');
+      return next;
+    });
+  };
+  return [state, setTweak];
+}
+
+/* ============================================================ */
+/* SIDEBAR                                                       */
+/* ============================================================ */
+function Sidebar({ lang, setLang, active, setActive }) {
+  const items = [
+    { k:'dashboard',    icon:'chart' },
+    { k:'transactions', icon:'list' },
+    { k:'reports',      icon:'doc' },
+    { k:'chat',         icon:'chat' },
+    { k:'settings',     icon:'gear' },
+  ];
+  return (
+    <aside style={{
+      width:240, height:'100vh', position:'sticky', top:0,
+      background:'#fff', borderRight:'1px solid var(--border)',
+      display:'flex', flexDirection:'column', padding:'18px 14px'
+    }}>
+      <a href="Landing Page.html" style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 8px', marginBottom:24 }}>
+        <LogoMark size={30} />
+        <span style={{ fontSize:14, fontWeight:600, letterSpacing:'-0.01em' }}>Smart Finn Track</span>
+      </a>
+
+      <div style={{ position:'relative', marginBottom:18 }}>
+        <span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'var(--ink-5)' }}>
+          <Icon name="search" size={14} />
+        </span>
+        <input
+          placeholder={lang === 'id' ? 'Cari transaksi…' : 'Search transactions…'}
+          style={{
+            width:'100%', padding:'7px 8px 7px 30px',
+            border:'1px solid var(--border)', borderRadius:8,
+            fontSize:12, background:'var(--bg)', color:'var(--ink)',
+            outline:'none'
+          }}
+        />
+      </div>
+
+      <nav style={{ display:'flex', flexDirection:'column', gap:2, marginBottom:24 }}>
+        {items.map(it => {
+          const a = active === it.k;
+          return (
+            <button key={it.k} onClick={() => setActive(it.k)}
+              style={{
+                display:'flex', alignItems:'center', gap:10, padding:'8px 10px',
+                borderRadius:8, fontSize:13, fontWeight: a ? 500 : 400,
+                color: a ? 'var(--ink)' : 'var(--ink-3)',
+                background: a ? 'var(--bg-soft)' : 'transparent',
+                border:'1px solid ' + (a ? 'var(--border)' : 'transparent'),
+                textAlign:'left', transition:'all 0.15s',
+                boxShadow: a ? 'var(--shadow-sm)' : 'none'
+              }}
+              onMouseEnter={e => { if (!a) e.currentTarget.style.background = 'var(--bg-soft)'; }}
+              onMouseLeave={e => { if (!a) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <Icon name={it.icon} size={15} />
+              <span>{t('nav.' + it.k, lang)}</span>
+              {it.k === 'chat' && (
+                <span style={{
+                  marginLeft:'auto', fontSize:9, color:'var(--accent-2)',
+                  background:'var(--accent-soft)', padding:'1px 6px',
+                  borderRadius:4, fontWeight:600
+                }}>AI</span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div style={{ marginTop:'auto', display:'flex', flexDirection:'column', gap:14 }}>
+        {/* Promo card */}
+        <div style={{
+          padding:14, borderRadius:10,
+          background:'var(--ink)', color:'#fff',
+          position:'relative', overflow:'hidden'
+        }}>
+          <div style={{ fontSize:11, color:'var(--accent)', fontWeight:500, marginBottom:6, letterSpacing:'0.04em', textTransform:'uppercase' }}>AI Tip</div>
+          <div style={{ fontSize:12, lineHeight:1.45, marginBottom:10 }}>
+            {lang === 'id' ? 'Hemat Rp 200K bulan ini dengan kurangi 2 langganan.' : 'Save Rp 200K this month by cutting 2 subscriptions.'}
+          </div>
+          <a href="#" style={{ fontSize:11, color:'var(--accent)', fontWeight:500, display:'inline-flex', alignItems:'center', gap:4 }}>
+            {lang === 'id' ? 'Lihat caranya' : 'See how'} <Icon name="arrow" size={11} />
+          </a>
+        </div>
+
+        {/* Language toggle */}
+        <div>
+          <div style={{ fontSize:10, fontWeight:500, color:'var(--ink-4)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6, paddingLeft:4 }}>
+            {lang === 'id' ? 'Bahasa' : 'Language'}
+          </div>
+          <div style={{ display:'flex', background:'var(--bg-soft)', border:'1px solid var(--border)', borderRadius:8, padding:3 }}>
+            {['id','en'].map(l => (
+              <button key={l} onClick={() => setLang(l)}
+                style={{
+                  flex:1, padding:'5px 0', borderRadius:6,
+                  background: lang === l ? '#fff' : 'transparent',
+                  color: lang === l ? 'var(--ink)' : 'var(--ink-4)',
+                  fontSize:11, fontWeight:500,
+                  textTransform:'uppercase', letterSpacing:'0.04em',
+                  boxShadow: lang === l ? 'var(--shadow-sm)' : 'none',
+                  transition:'all 0.15s'
+                }}>{l}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* User */}
+        <div style={{
+          display:'flex', alignItems:'center', gap:10, padding:'10px 8px',
+          borderTop:'1px solid var(--border)', marginTop:4
+        }}>
+          <div style={{
+            width:30, height:30, borderRadius:8, background:'var(--accent)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            color:'#fff', fontWeight:600, fontSize:12
+          }}>F</div>
+          <div style={{ fontSize:11, flex:1, minWidth:0 }}>
+            <div style={{ fontWeight:500, color:'var(--ink)' }}>Filan</div>
+            <div style={{ color:'var(--ink-4)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>filan@example.com</div>
+          </div>
+          <button style={{ color:'var(--ink-4)' }}>
+            <Icon name="chevD" size={14} />
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* ============================================================ */
+/* PAGE HEADER                                                   */
+/* ============================================================ */
+function PageHeader({ lang, monthIdx, year, setMonth, onAdd }) {
+  return (
+    <div style={{
+      display:'flex', justifyContent:'space-between', alignItems:'flex-start',
+      padding:'28px 32px 24px', borderBottom:'1px solid var(--border)',
+      background:'#fff'
+    }}>
+      <div>
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
+          <h1 style={{ fontSize:26, fontWeight:600, letterSpacing:'-0.02em', margin:0 }}>{t('page.title', lang)}</h1>
+          <span style={{
+            fontSize:10, color:'var(--accent-2)', background:'var(--accent-soft)',
+            padding:'3px 8px', borderRadius:6, fontWeight:600,
+            display:'inline-flex', alignItems:'center', gap:4
+          }}>
+            <span style={{ width:5, height:5, borderRadius:'50%', background:'var(--accent)' }} className="pulse-dot"/>
+            {lang === 'id' ? 'Live' : 'Live'}
+          </span>
+        </div>
+        <p style={{ fontSize:14, color:'var(--ink-3)', margin:0 }}>{t('page.subtitle', lang)}</p>
+      </div>
+      <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+        {/* Month picker */}
+        <div style={{
+          display:'inline-flex', alignItems:'center', background:'#fff',
+          border:'1px solid var(--border)', borderRadius:9, boxShadow:'var(--shadow-sm)'
+        }}>
+          <button onClick={() => setMonth(monthIdx - 1)}
+            style={{ padding:'7px 10px', color:'var(--ink-3)', borderRight:'1px solid var(--border)' }}>
+            <Icon name="chevL" size={14} />
+          </button>
+          <div style={{ padding:'7px 14px', fontSize:13, fontWeight:500, minWidth:140, textAlign:'center' }}>
+            {COPY.months[lang][monthIdx]} {year}
+          </div>
+          <button onClick={() => setMonth(monthIdx + 1)}
+            style={{ padding:'7px 10px', color:'var(--ink-3)', borderLeft:'1px solid var(--border)' }}>
+            <Icon name="chevR" size={14} />
+          </button>
+        </div>
+        <button style={{
+          padding:'8px 12px', background:'#fff', border:'1px solid var(--border)',
+          borderRadius:9, fontSize:13, color:'var(--ink-2)',
+          display:'inline-flex', alignItems:'center', gap:6, boxShadow:'var(--shadow-sm)'
+        }}>
+          <Icon name="download" size={13} />{t('page.export', lang)}
+        </button>
+        <button onClick={onAdd} style={{
+          padding:'8px 14px', background:'var(--ink)', color:'#fff', borderRadius:9,
+          fontSize:13, fontWeight:500, display:'inline-flex', alignItems:'center', gap:6,
+          boxShadow:'var(--shadow-md)'
+        }}>
+          <Icon name="plus" size={13} />{t('page.add', lang)}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* METRIC CARDS                                                  */
+/* ============================================================ */
+function MetricRow({ lang, income, expense, balance }) {
+  const incomeChange = +12.0;
+  const expenseChange = +18.0;
+  const ratio = expense / income;
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1.4fr', gap:14 }}>
+      <MetricCard
+        label={t('metrics.income', lang)}
+        value={fmtIDR(income, lang)}
+        delta={incomeChange}
+        deltaLabel={t('metrics.vsLastMonth', lang)}
+        icon="arrowUp"
+        iconColor="var(--accent)"
+      />
+      <MetricCard
+        label={t('metrics.expense', lang)}
+        value={fmtIDR(expense, lang)}
+        delta={expenseChange}
+        deltaLabel={t('metrics.vsLastMonth', lang)}
+        icon="arrowDown"
+        iconColor="var(--danger)"
+        deltaNegative
+      />
+      <MetricCard
+        hero
+        label={t('metrics.balance', lang)}
+        value={fmtIDR(balance, lang)}
+        sublabel={t('metrics.saved', lang)}
+        ratio={ratio}
+        lang={lang}
+      />
+    </div>
+  );
+}
+
+function MetricCard({ label, value, delta, deltaLabel, deltaNegative, icon, iconColor, hero, sublabel, ratio, lang }) {
+  if (hero) {
+    return (
+      <div style={{
+        padding:'20px 22px', borderRadius:14, background:'var(--ink)', color:'#fff',
+        position:'relative', overflow:'hidden', display:'flex', flexDirection:'column', justifyContent:'space-between'
+      }} className="slide-up">
+        <div>
+          <div style={{
+            display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10
+          }}>
+            <span style={{ fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</span>
+            <span style={{
+              fontSize:10, padding:'3px 8px', borderRadius:5, fontWeight:500,
+              background:'var(--accent)', color:'#fff'
+            }}>{lang === 'id' ? 'Sehat' : 'Healthy'}</span>
+          </div>
+          <div className="mono" style={{ fontSize:32, fontWeight:600, letterSpacing:'-0.02em', lineHeight:1.1 }}>{value}</div>
+          <div style={{ fontSize:12, color:'rgba(255,255,255,0.55)', marginTop:6 }}>{sublabel}</div>
+        </div>
+        <div style={{ marginTop:16 }}>
+          <div style={{
+            display:'flex', justifyContent:'space-between',
+            fontSize:10, color:'rgba(255,255,255,0.45)', marginBottom:6,
+            textTransform:'uppercase', letterSpacing:'0.06em', fontWeight:500
+          }}>
+            <span>{lang === 'id' ? 'Pengeluaran' : 'Spent'}</span>
+            <span className="mono">{(ratio * 100).toFixed(0)}%</span>
+          </div>
+          <div style={{ height:6, background:'rgba(255,255,255,0.1)', borderRadius:3, overflow:'hidden' }}>
+            <div style={{
+              height:'100%', width:`${ratio * 100}%`, background:'var(--accent)',
+              borderRadius:3, transition:'width 1s ease-out'
+            }}/>
+          </div>
+        </div>
+        <svg style={{ position:'absolute', right:-20, top:-20, opacity:0.06, pointerEvents:'none' }} width="200" height="120" viewBox="0 0 200 120">
+          <path d="M0 100 L30 80 L55 90 L85 50 L115 60 L145 30 L175 40 L200 20" stroke="var(--accent)" strokeWidth="3" fill="none"/>
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <div style={{
+      padding:'18px 20px', borderRadius:14, background:'#fff',
+      border:'1px solid var(--border)', display:'flex', flexDirection:'column', gap:12
+    }} className="slide-up">
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+        <span style={{ fontSize:10, fontWeight:500, color:'var(--ink-4)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</span>
+        <div style={{
+          width:28, height:28, borderRadius:7, background:'var(--bg-soft)',
+          display:'flex', alignItems:'center', justifyContent:'center', color: iconColor
+        }}>
+          <Icon name={icon} size={14} stroke={2.4} />
+        </div>
+      </div>
+      <div className="mono" style={{ fontSize:24, fontWeight:600, letterSpacing:'-0.02em', lineHeight:1 }}>{value}</div>
+      <div style={{
+        fontSize:11, display:'inline-flex', alignItems:'center', gap:5,
+        color: (delta > 0 && !deltaNegative) || (delta < 0 && deltaNegative) ? 'var(--accent-2)' : 'var(--danger)'
+      }}>
+        <span style={{ fontWeight:600 }}>{delta > 0 ? '↑' : '↓'} {Math.abs(delta).toFixed(1)}%</span>
+        <span style={{ color:'var(--ink-4)' }}>{deltaLabel}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* ANOMALY ALERT                                                 */
+/* ============================================================ */
+function AnomalyAlert({ lang, onDismiss }) {
+  return (
+    <div className="slide-up" style={{
+      display:'flex', gap:14, padding:'14px 18px', borderRadius:12,
+      background:'#fff', border:'1px solid #fde68a',
+      boxShadow:'var(--shadow-sm)', position:'relative'
+    }}>
+      <div style={{
+        width:36, height:36, borderRadius:8, background:'var(--amber-soft)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        color:'var(--amber)', flexShrink:0
+      }}>
+        <Icon name="bell" size={16} />
+      </div>
+      <div style={{ flex:1 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+          <span style={{ fontSize:13, fontWeight:600, color:'var(--ink)' }}>{t('anomaly.title', lang)}</span>
+          <span style={{ fontSize:9, fontWeight:600, color:'var(--amber)', background:'var(--amber-soft)', padding:'2px 6px', borderRadius:4 }}>AI</span>
+        </div>
+        <p style={{ fontSize:13, color:'var(--ink-3)', margin:0, lineHeight:1.55, maxWidth:720 }}>
+          {t('anomaly.body', lang)}
+        </p>
+        <div style={{ display:'flex', gap:14, marginTop:8 }}>
+          <button style={{ fontSize:12, color:'var(--ink-2)', fontWeight:500 }}>{t('anomaly.learn', lang)} →</button>
+          <button onClick={onDismiss} style={{ fontSize:12, color:'var(--ink-4)' }}>{t('anomaly.dismiss', lang)}</button>
+        </div>
+      </div>
+      <button onClick={onDismiss} style={{ color:'var(--ink-4)', alignSelf:'flex-start' }}>
+        <Icon name="x" size={14} />
+      </button>
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* DONUT CHART                                                   */
+/* ============================================================ */
+function DonutCard({ lang, cats, total }) {
+  const [hover, setHover] = useState(null);
+  const R = 56, C = 2 * Math.PI * R;
+  let offset = 0;
+  const segs = cats.map((c, i) => {
+    const len = (c.val / total) * C;
+    const seg = { ...c, len, offset, idx: i };
+    offset += len;
+    return seg;
+  });
+  const active = hover !== null ? cats[hover] : null;
+  return (
+    <Card>
+      <CardHeader title={t('charts.byCategory', lang)} sub={t('charts.thisMonth', lang)} />
+      <div style={{ display:'flex', alignItems:'center', gap:24, padding:'12px 4px 4px' }}>
+        <div style={{ position:'relative', width:160, height:160, flexShrink:0 }}>
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r={R} fill="none" stroke="var(--bg-soft)" strokeWidth="18"/>
+            {segs.map(s => (
+              <circle key={s.key} cx="80" cy="80" r={R} fill="none"
+                stroke={CAT_COLORS[s.key].dot} strokeWidth="18"
+                strokeDasharray={`${s.len} ${C}`}
+                strokeDashoffset={-s.offset}
+                transform="rotate(-90 80 80)"
+                className="donut-seg"
+                style={{ animationDelay: `${s.idx*0.08}s`, cursor:'pointer', transition:'opacity 0.2s', opacity: hover !== null && hover !== s.idx ? 0.3 : 1 }}
+                onMouseEnter={() => setHover(s.idx)}
+                onMouseLeave={() => setHover(null)}
+              />
+            ))}
+          </svg>
+          <div style={{
+            position:'absolute', inset:0, display:'flex', flexDirection:'column',
+            alignItems:'center', justifyContent:'center', pointerEvents:'none'
+          }}>
+            <div style={{ fontSize:10, color:'var(--ink-4)', fontWeight:500, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:2 }}>
+              {active ? t('categoriesShort.' + active.key, lang) : (lang === 'id' ? 'Total' : 'Total')}
+            </div>
+            <div className="mono" style={{ fontSize:22, fontWeight:600, letterSpacing:'-0.01em' }}>
+              {fmtIDRShort(active ? active.val : total)}
+            </div>
+            {active && (
+              <div style={{ fontSize:10, color:'var(--ink-4)', marginTop:2 }}>
+                {((active.val/total)*100).toFixed(1)}%
+              </div>
+            )}
+          </div>
+        </div>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', gap:8 }}>
+          {cats.map((c, i) => (
+            <div key={c.key}
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+              style={{
+                display:'grid', gridTemplateColumns:'auto 1fr auto auto', gap:10, alignItems:'center',
+                padding:'5px 6px', borderRadius:6, cursor:'pointer',
+                background: hover === i ? 'var(--bg-soft)' : 'transparent',
+                transition:'background 0.15s'
+              }}>
+              <span style={{ width:10, height:10, borderRadius:3, background:CAT_COLORS[c.key].dot }}/>
+              <span style={{ fontSize:13, color:'var(--ink-2)' }}>{t('categories.' + c.key, lang)}</span>
+              <span style={{ fontSize:11, color:'var(--ink-4)', minWidth:38, textAlign:'right' }}>
+                {((c.val/total)*100).toFixed(0)}%
+              </span>
+              <span className="mono" style={{ fontSize:12, fontWeight:500, minWidth:60, textAlign:'right' }}>
+                {fmtIDRShort(c.val)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ============================================================ */
+/* TREND CHART                                                   */
+/* ============================================================ */
+function TrendCard({ lang }) {
+  const points = [42, 28, 36, 22, 38, 45, 31, 26, 48, 39, 52, 33, 42, 28, 35, 48, 78, 41, 36, 44, 52, 39, 47, 95, 62, 51, 38, 42, 51, 46];
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const W = 700, H = 220, P = 16;
+  const max = Math.max(...points);
+  const min = 0;
+  const xAt = i => P + (i / (points.length - 1)) * (W - 2*P);
+  const yAt = v => H - P - 28 - ((v - min) / (max - min)) * (H - 2*P - 28);
+  const path = points.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xAt(i).toFixed(1)} ${yAt(v).toFixed(1)}`).join(' ');
+  const area = path + ` L ${xAt(points.length-1)} ${H-P-28} L ${xAt(0)} ${H-P-28} Z`;
+
+  const avg = points.reduce((s,v) => s+v, 0) / points.length;
+  const avgY = yAt(avg);
+
+  const handleMove = (e) => {
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * W;
+    const idx = Math.max(0, Math.min(points.length-1, Math.round(((x - P) / (W - 2*P)) * (points.length-1))));
+    setHoverIdx(idx);
+  };
+
+  return (
+    <Card>
+      <CardHeader title={t('charts.dailyTrend', lang)} sub={t('charts.last30', lang)}
+        actions={
+          <div style={{ display:'flex', gap:6 }}>
+            {[{k:'7d',l:'7D'},{k:'30d',l:'30D'},{k:'90d',l:'90D'}].map((s, i) => (
+              <button key={s.k} style={{
+                padding:'4px 10px', borderRadius:6, fontSize:11, fontWeight:500,
+                background: i === 1 ? 'var(--bg-soft)' : 'transparent',
+                color: i === 1 ? 'var(--ink)' : 'var(--ink-4)',
+                border: i === 1 ? '1px solid var(--border)' : '1px solid transparent'
+              }}>{s.l}</button>
+            ))}
+          </div>
+        }
+      />
+      <div style={{ padding:'8px 4px 4px', position:'relative' }}>
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="220" preserveAspectRatio="none"
+          style={{ display:'block', cursor:'crosshair' }}
+          onMouseMove={handleMove}
+          onMouseLeave={() => setHoverIdx(null)}
+        >
+          <defs>
+            <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.25"/>
+              <stop offset="100%" stopColor="var(--accent)" stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+
+          {/* horizontal gridlines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((p, i) => {
+            const y = P + p * (H - 2*P - 28);
+            return <line key={i} x1={P} x2={W-P} y1={y} y2={y} stroke="var(--bg-soft)" strokeWidth="1"/>;
+          })}
+
+          {/* avg line */}
+          <line x1={P} x2={W-P} y1={avgY} y2={avgY} stroke="var(--ink-5)" strokeDasharray="4 4" strokeWidth="1"/>
+          <text x={W-P-4} y={avgY-6} textAnchor="end" fontSize="10" fill="var(--ink-4)" fontFamily="JetBrains Mono">
+            avg {fmtIDRShort(Math.round(avg*1000))}
+          </text>
+
+          {/* area */}
+          <path d={area} fill="url(#trendArea)"/>
+
+          {/* line */}
+          <path className="chart-line" d={path} stroke="var(--accent)" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+
+          {/* spike marker for anomalous day */}
+          {points.map((v, i) => v > 70 && (
+            <g key={'spike'+i}>
+              <circle cx={xAt(i)} cy={yAt(v)} r="5" fill="#fff" stroke="var(--danger)" strokeWidth="2"/>
+              <circle cx={xAt(i)} cy={yAt(v)} r="9" fill="none" stroke="var(--danger)" strokeWidth="1" opacity="0.4" className="pulse-dot"/>
+            </g>
+          ))}
+
+          {/* hover */}
+          {hoverIdx !== null && (
+            <g>
+              <line x1={xAt(hoverIdx)} x2={xAt(hoverIdx)} y1={P} y2={H-P-28}
+                stroke="var(--ink-5)" strokeWidth="1" strokeDasharray="2 3"/>
+              <circle cx={xAt(hoverIdx)} cy={yAt(points[hoverIdx])} r="4" fill="#fff" stroke="var(--accent)" strokeWidth="2"/>
+            </g>
+          )}
+
+          {/* x labels */}
+          {[0, 7, 14, 21, 29].map(i => (
+            <text key={i} x={xAt(i)} y={H-8} textAnchor="middle" fontSize="10" fill="var(--ink-4)" fontFamily="JetBrains Mono">
+              {i+1}
+            </text>
+          ))}
+        </svg>
+        {hoverIdx !== null && (
+          <div style={{
+            position:'absolute',
+            left: `calc(${(xAt(hoverIdx) / W) * 100}% + ${hoverIdx > points.length/2 ? -110 : 12}px)`,
+            top: `calc(${(yAt(points[hoverIdx]) / H) * 100}% - 8px)`,
+            background:'var(--ink)', color:'#fff', padding:'8px 12px', borderRadius:8,
+            fontSize:11, pointerEvents:'none', whiteSpace:'nowrap',
+            boxShadow:'var(--shadow-md)', minWidth:120
+          }}>
+            <div style={{ fontSize:10, color:'rgba(255,255,255,0.6)', marginBottom:2 }}>
+              {lang === 'id' ? `${hoverIdx+1} Mei 2026` : `May ${hoverIdx+1}, 2026`}
+            </div>
+            <div className="mono" style={{ fontWeight:600 }}>{fmtIDR(points[hoverIdx]*1000, lang)}</div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/* ============================================================ */
+/* AI INSIGHT CARD                                               */
+/* ============================================================ */
+function InsightCard({ lang }) {
+  return (
+    <Card style={{ background:'linear-gradient(135deg, #ffffff 0%, #fafaf9 100%)' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+        <div style={{
+          width:24, height:24, borderRadius:6, background:'var(--ink)',
+          display:'flex', alignItems:'center', justifyContent:'center', color:'var(--accent)'
+        }}>
+          <Icon name="spark" size={13} />
+        </div>
+        <span style={{ fontSize:12, fontWeight:600, color:'var(--ink)' }}>{t('insight.label', lang)}</span>
+        <span style={{ fontSize:9, fontWeight:600, color:'#fff', background:'var(--accent)', padding:'2px 6px', borderRadius:4 }}>AI</span>
+      </div>
+      <p style={{ fontSize:13, color:'var(--ink-2)', margin:'0 0 14px', lineHeight:1.6, textWrap:'pretty' }}>
+        {t('insight.text', lang)}
+      </p>
+      <div style={{
+        padding:'10px 12px', background:'#fff', border:'1px solid var(--border)',
+        borderRadius:9, display:'flex', alignItems:'center', justifyContent:'space-between', gap:10
+      }}>
+        <span style={{ fontSize:12, color:'var(--ink-3)' }}>{t('insight.actionable', lang)}</span>
+        <button style={{
+          fontSize:11, fontWeight:500, color:'#fff', background:'var(--ink)',
+          padding:'5px 10px', borderRadius:6, display:'inline-flex', alignItems:'center', gap:4,
+          whiteSpace:'nowrap'
+        }}>
+          {t('insight.askAdvisor', lang)} <Icon name="arrow" size={11} />
+        </button>
+      </div>
+    </Card>
+  );
+}
+
+/* ============================================================ */
+/* TRANSACTIONS LIST                                             */
+/* ============================================================ */
+function TransactionsList({ lang, txns, processingId }) {
+  const formatDate = (dateStr, lang) => {
+    const d = new Date(dateStr);
+    const today = new Date('2026-05-26');
+    const yesterday = new Date('2026-05-25');
+    if (d.toDateString() === today.toDateString()) return t('txns.today', lang);
+    if (d.toDateString() === yesterday.toDateString()) return t('txns.yesterday', lang);
+    const months = COPY.months[lang];
+    if (lang === 'id') return `${d.getDate()} ${months[d.getMonth()].slice(0,3)}`;
+    return `${months[d.getMonth()].slice(0,3)} ${d.getDate()}`;
+  };
+
+  return (
+    <Card noPad>
+      <div style={{ padding:'14px 18px 12px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)' }}>{t('txns.title', lang)}</div>
+          <div style={{ fontSize:11, color:'var(--ink-4)', marginTop:2 }}>
+            {txns.length} {lang === 'id' ? 'transaksi · Mei 2026' : 'transactions · May 2026'}
+          </div>
+        </div>
+        <a href="#" style={{ fontSize:12, color:'var(--ink-3)', fontWeight:500, display:'inline-flex', alignItems:'center', gap:4 }}>
+          {t('txns.viewAll', lang)} <Icon name="arrow" size={12} />
+        </a>
+      </div>
+      <div style={{ maxHeight:520, overflow:'auto' }}>
+        {txns.length === 0 ? (
+          <div style={{ padding:'48px 18px', textAlign:'center' }}>
+            <div style={{
+              width:48, height:48, borderRadius:12, background:'var(--bg-soft)',
+              display:'inline-flex', alignItems:'center', justifyContent:'center',
+              color:'var(--ink-4)', marginBottom:12
+            }}>
+              <Icon name="list" size={20} />
+            </div>
+            <div style={{ fontSize:14, fontWeight:500, color:'var(--ink-2)', marginBottom:4 }}>{t('txns.empty', lang)}</div>
+            <div style={{ fontSize:13, color:'var(--ink-4)' }}>{t('txns.emptySub', lang)}</div>
+          </div>
+        ) : (
+          txns.slice(0, 12).map((tx, i) => (
+            <div key={tx.id} style={{
+              display:'grid', gridTemplateColumns:'auto 1fr auto auto', gap:14, alignItems:'center',
+              padding:'12px 18px',
+              borderBottom: i < Math.min(11, txns.length-1) ? '1px solid var(--border)' : 'none',
+              transition:'background 0.15s', cursor:'pointer'
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-soft)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{
+                width:36, height:36, borderRadius:9,
+                background: CAT_COLORS[tx.cat].bg,
+                color: CAT_COLORS[tx.cat].c,
+                display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+              }}>
+                <Icon name={CAT_ICON[tx.cat] || 'spark'} size={14} stroke={2.2} />
+              </div>
+              <div style={{ minWidth:0 }}>
+                <div style={{ fontSize:13, fontWeight:500, color:'var(--ink)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  {tx.desc[lang]}
+                </div>
+                <div style={{ fontSize:11, color:'var(--ink-4)', marginTop:2, display:'flex', alignItems:'center', gap:8 }}>
+                  <span>{formatDate(tx.date, lang)}</span>
+                  <span style={{ color:'var(--ink-5)' }}>·</span>
+                  {tx.id === processingId ? (
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, color:'var(--accent-2)' }}>
+                      <span style={{
+                        width:10, height:10, border:'1.5px solid var(--accent)', borderTopColor:'transparent',
+                        borderRadius:'50%', display:'inline-block', animation:'spin 0.8s linear infinite'
+                      }}/>
+                      {t('categorizing', lang)}
+                    </span>
+                  ) : (
+                    <span>{t('categoriesShort.' + tx.cat, lang)}</span>
+                  )}
+                </div>
+              </div>
+              <CatBadge cat={tx.cat} lang={lang} />
+              <span className="mono" style={{
+                fontSize:14, fontWeight:600,
+                color: tx.amt > 0 ? 'var(--accent-2)' : 'var(--ink)',
+                minWidth:120, textAlign:'right'
+              }}>
+                {fmtIDR(tx.amt, lang, { signed:true })}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function CatBadge({ cat, lang }) {
+  const c = CAT_COLORS[cat];
+  return (
+    <span style={{
+      fontSize:10, fontWeight:500, padding:'3px 8px', borderRadius:5,
+      color: c.c, background: c.bg, whiteSpace:'nowrap'
+    }}>{t('categoriesShort.' + cat, lang)}</span>
+  );
+}
+
+/* ============================================================ */
+/* CARD                                                          */
+/* ============================================================ */
+function Card({ children, noPad, style }) {
+  return (
+    <div className="slide-up" style={{
+      background:'#fff', border:'1px solid var(--border)', borderRadius:14,
+      padding: noPad ? 0 : '16px 18px', ...style
+    }}>
+      {children}
+    </div>
+  );
+}
+function CardHeader({ title, sub, actions }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+      <div>
+        <div style={{ fontSize:13, fontWeight:600, color:'var(--ink)' }}>{title}</div>
+        {sub && <div style={{ fontSize:11, color:'var(--ink-4)', marginTop:2 }}>{sub}</div>}
+      </div>
+      {actions}
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* ADD TRANSACTION MODAL                                         */
+/* ============================================================ */
+function AddTxnModal({ lang, open, onClose, onSave }) {
+  const [type, setType] = useState('expense');
+  const [amount, setAmount] = useState('');
+  const [desc, setDesc] = useState('');
+  const [date, setDate] = useState('2026-05-26');
+
+  useEffect(() => {
+    if (open) {
+      setType('expense');
+      setAmount('');
+      setDesc('');
+      setDate('2026-05-26');
+    }
+  }, [open]);
+
+  if (!open) return null;
+  const canSave = amount && desc;
+
+  const submit = () => {
+    if (!canSave) return;
+    const n = parseInt(String(amount).replace(/[^\d]/g, ''), 10) || 0;
+    onSave({ amount: type === 'expense' ? -n : n, desc, date });
+  };
+
+  return (
+    <>
+      <div style={{
+        position:'fixed', inset:0, background:'rgba(9,9,11,0.5)', zIndex:90,
+        animation:'backdropIn 0.2s ease-out'
+      }} onClick={onClose}/>
+      <div style={{
+        position:'fixed', inset:0, zIndex:100, display:'flex', alignItems:'center', justifyContent:'center',
+        padding:20, pointerEvents:'none'
+      }}>
+        <div style={{
+          background:'#fff', borderRadius:16, width:'100%', maxWidth:460,
+          boxShadow:'var(--shadow-lg)', pointerEvents:'auto',
+          animation:'modalIn 0.25s ease-out',
+          border:'1px solid var(--border)'
+        }}>
+          <div style={{ padding:'20px 24px 8px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+            <div>
+              <h2 style={{ fontSize:18, fontWeight:600, margin:'0 0 4px', letterSpacing:'-0.015em' }}>{t('modal.title', lang)}</h2>
+              <p style={{ fontSize:13, color:'var(--ink-4)', margin:0 }}>{t('modal.sub', lang)}</p>
+            </div>
+            <button onClick={onClose} style={{ color:'var(--ink-4)', padding:4 }}>
+              <Icon name="x" size={16} />
+            </button>
+          </div>
+          <div style={{ padding:'16px 24px', display:'flex', flexDirection:'column', gap:14 }}>
+            {/* Type toggle */}
+            <div>
+              <Label>{t('modal.type', lang)}</Label>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, background:'var(--bg-soft)', padding:4, borderRadius:9 }}>
+                {[
+                  { k:'expense', label:t('modal.expense', lang), color:'var(--danger)' },
+                  { k:'income',  label:t('modal.income', lang),  color:'var(--accent-2)' },
+                ].map(opt => (
+                  <button key={opt.k} onClick={() => setType(opt.k)}
+                    style={{
+                      padding:'8px 12px', borderRadius:7, fontSize:13, fontWeight:500,
+                      background: type === opt.k ? '#fff' : 'transparent',
+                      color: type === opt.k ? opt.color : 'var(--ink-4)',
+                      boxShadow: type === opt.k ? 'var(--shadow-sm)' : 'none',
+                      transition:'all 0.15s'
+                    }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label>{t('modal.amount', lang)}</Label>
+              <div style={{ position:'relative' }}>
+                <span style={{
+                  position:'absolute', left:14, top:'50%', transform:'translateY(-50%)',
+                  fontSize:14, color:'var(--ink-4)', fontFamily:'JetBrains Mono', fontWeight:500
+                }}>Rp</span>
+                <input
+                  type="text"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value.replace(/[^\d]/g,''))}
+                  placeholder="0"
+                  autoFocus
+                  style={{
+                    width:'100%', padding:'12px 14px 12px 42px',
+                    border:'1px solid var(--border)', borderRadius:9,
+                    fontSize:18, fontWeight:600, color:'var(--ink)',
+                    fontFamily:'JetBrains Mono', outline:'none', background:'#fff'
+                  }}
+                />
+              </div>
+              {amount && (
+                <div className="mono fade-in" style={{ fontSize:12, color:'var(--ink-4)', marginTop:6 }}>
+                  = {fmtIDR(parseInt(amount, 10), lang)}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label>{t('modal.desc', lang)}</Label>
+              <input
+                type="text"
+                value={desc}
+                onChange={e => setDesc(e.target.value)}
+                placeholder={t('modal.descPh', lang)}
+                style={{
+                  width:'100%', padding:'10px 14px',
+                  border:'1px solid var(--border)', borderRadius:9,
+                  fontSize:14, color:'var(--ink)', outline:'none', background:'#fff'
+                }}
+              />
+              <div style={{ fontSize:11, color:'var(--ink-4)', marginTop:6, display:'flex', alignItems:'center', gap:4 }}>
+                <Icon name="spark" size={11} />
+                {lang === 'id' ? 'AI akan otomatis memilih kategori dari deskripsi ini.' : 'AI will pick a category from this description.'}
+              </div>
+            </div>
+
+            <div>
+              <Label>{t('modal.date', lang)}</Label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                style={{
+                  width:'100%', padding:'10px 14px',
+                  border:'1px solid var(--border)', borderRadius:9,
+                  fontSize:14, color:'var(--ink)', outline:'none', background:'#fff'
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ padding:'16px 24px 20px', display:'flex', gap:10, justifyContent:'flex-end', borderTop:'1px solid var(--border)' }}>
+            <button onClick={onClose} style={{
+              padding:'9px 16px', borderRadius:9, fontSize:13, fontWeight:500,
+              color:'var(--ink-2)', border:'1px solid var(--border)', background:'#fff'
+            }}>{t('modal.cancel', lang)}</button>
+            <button onClick={submit} disabled={!canSave} style={{
+              padding:'9px 18px', borderRadius:9, fontSize:13, fontWeight:500,
+              color:'#fff', background: canSave ? 'var(--ink)' : 'var(--ink-5)',
+              opacity: canSave ? 1 : 0.6, cursor: canSave ? 'pointer' : 'not-allowed',
+              display:'inline-flex', alignItems:'center', gap:6
+            }}>
+              {t('modal.save', lang)} <Icon name="arrow" size={12} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Label({ children }) {
+  return (
+    <div style={{ fontSize:11, fontWeight:500, color:'var(--ink-3)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>
+      {children}
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* TWEAKS PANEL                                                  */
+/* ============================================================ */
+function TweaksPanel({ open, onClose, tweaks, setTweak }) {
+  if (!open) return null;
+  const colors = ['#10b981', '#6366f1', '#f43f5e', '#f59e0b'];
+  return (
+    <div style={{
+      position:'fixed', bottom:20, right:20, width:280, background:'#fff',
+      border:'1px solid var(--border)', borderRadius:14, boxShadow:'var(--shadow-lg)',
+      zIndex:1000, padding:16, fontSize:13
+    }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+        <span style={{ fontWeight:600 }}>Tweaks</span>
+        <button onClick={onClose} style={{ color:'var(--ink-4)', fontSize:18, lineHeight:1 }}>×</button>
+      </div>
+      <div style={{ marginBottom:14 }}>
+        <div style={{ fontSize:11, fontWeight:500, color:'var(--ink-4)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>Language</div>
+        <div style={{ display:'flex', gap:6 }}>
+          {['id','en'].map(l => (
+            <button key={l} onClick={() => setTweak('language', l)}
+              style={{
+                flex:1, padding:'8px 10px', borderRadius:8,
+                border:'1px solid ' + (tweaks.language === l ? 'var(--ink)' : 'var(--border)'),
+                background: tweaks.language === l ? 'var(--ink)' : '#fff',
+                color: tweaks.language === l ? '#fff' : 'var(--ink)',
+                fontSize:12, fontWeight:500
+              }}>
+              {l === 'id' ? 'Indonesia' : 'English'}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginBottom:14 }}>
+        <div style={{ fontSize:11, fontWeight:500, color:'var(--ink-4)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>Accent</div>
+        <div style={{ display:'flex', gap:8 }}>
+          {colors.map(c => (
+            <button key={c} onClick={() => setTweak('accent', c)}
+              style={{
+                width:36, height:36, borderRadius:10, background:c,
+                border: tweaks.accent === c ? '2px solid var(--ink)' : '1px solid var(--border)',
+                boxShadow: tweaks.accent === c ? '0 0 0 2px #fff inset' : 'none'
+              }}/>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, fontSize:12 }}>
+          <span style={{ color:'var(--ink-2)' }}>Show anomaly alert</span>
+          <button onClick={() => setTweak('showAnomaly', !tweaks.showAnomaly)}
+            style={{
+              width:36, height:20, borderRadius:10, padding:2,
+              background: tweaks.showAnomaly ? 'var(--accent)' : 'var(--bg-muted)',
+              transition:'background 0.15s', position:'relative'
+            }}>
+            <span style={{
+              display:'block', width:16, height:16, background:'#fff', borderRadius:'50%',
+              transform: tweaks.showAnomaly ? 'translateX(16px)' : 'translateX(0)',
+              transition:'transform 0.15s'
+            }}/>
+          </button>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ */
+/* APP                                                           */
+/* ============================================================ */
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [editOpen, setEditOpen] = useState(false);
+  const [active, setActive] = useState('dashboard');
+  const [monthIdx, setMonthIdx] = useState(4); // May
+  const [year] = useState(2026);
+  const [txns, setTxns] = useState(SEED_TXNS);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [anomalyVisible, setAnomalyVisible] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent', tweaks.accent);
+    document.documentElement.style.setProperty('--accent-2', tweaks.accent);
+  }, [tweaks.accent]);
+
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (e.data?.type === '__activate_edit_mode') setEditOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setEditOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type:'__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const lang = tweaks.language;
+  const setLang = (l) => setTweak('language', l);
+
+  // Aggregates
+  const income  = txns.filter(t => t.amt > 0).reduce((s,t) => s + t.amt, 0);
+  const expense = -txns.filter(t => t.amt < 0).reduce((s,t) => s + t.amt, 0);
+  const balance = income - expense;
+
+  // Category breakdown for expenses
+  const catTotals = {};
+  txns.forEach(t => {
+    if (t.amt < 0) catTotals[t.cat] = (catTotals[t.cat] || 0) + Math.abs(t.amt);
+  });
+  const cats = Object.entries(catTotals)
+    .map(([key, val]) => ({ key, val }))
+    .sort((a, b) => b.val - a.val);
+  const catTotal = cats.reduce((s, c) => s + c.val, 0);
+
+  const handleSave = ({ amount, desc, date }) => {
+    setModalOpen(false);
+    const id = Date.now();
+    // Add as 'shopping' placeholder, then "AI categorizes" after 1.5s
+    const guess = amount > 0 ? 'income' : 'shopping';
+    const final = (() => {
+      const d = desc.toLowerCase();
+      if (/gojek|grab|bensin|busway|krl|mrt|ojek|taxi|fuel/.test(d)) return 'transport';
+      if (/kopi|makan|food|lunch|dinner|breakfast|nasi|warteg|ayam|pizza|burger|coffee/.test(d)) return 'food';
+      if (/netflix|spotify|bioskop|cinema|game|movie|hiburan/.test(d)) return 'entertainment';
+      if (/indomaret|alfamart|tokopedia|shopee|belanja|baju|sepatu|shopping/.test(d)) return 'shopping';
+      if (/listrik|air|pln|wifi|internet|tagihan|bill/.test(d)) return 'bills';
+      if (/obat|apotek|dokter|rumah sakit|hospital|medicine|pharmacy/.test(d)) return 'health';
+      if (/buku|kursus|book|course|tuition|sekolah/.test(d)) return 'education';
+      if (/gaji|salary|bonus|freelance|income/.test(d)) return 'income';
+      return guess;
+    })();
+    const newTxn = {
+      id, date,
+      desc: { id: desc, en: desc },
+      cat: guess,
+      amt: amount,
+    };
+    setTxns(prev => [newTxn, ...prev]);
+    setProcessingId(id);
+    setTimeout(() => {
+      setTxns(prev => prev.map(t => t.id === id ? { ...t, cat: final } : t));
+      setProcessingId(null);
+    }, 1600);
+  };
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'240px 1fr', minHeight:'100vh' }}>
+      <Sidebar lang={lang} setLang={setLang} active={active} setActive={setActive} />
+      <main style={{ minWidth:0 }}>
+        <PageHeader
+          lang={lang}
+          monthIdx={monthIdx}
+          year={year}
+          setMonth={n => setMonthIdx(((n % 12) + 12) % 12)}
+          onAdd={() => setModalOpen(true)}
+        />
+        <div style={{ padding:'24px 32px 40px', display:'flex', flexDirection:'column', gap:14 }}>
+          {tweaks.showAnomaly && anomalyVisible && <AnomalyAlert lang={lang} onDismiss={() => setAnomalyVisible(false)} />}
+          <MetricRow lang={lang} income={income} expense={expense} balance={balance} />
+          <div style={{ display:'grid', gridTemplateColumns:'1.05fr 1.4fr', gap:14 }}>
+            <DonutCard lang={lang} cats={cats} total={catTotal} />
+            <TrendCard lang={lang} />
+          </div>
+          <InsightCard lang={lang} />
+          <TransactionsList lang={lang} txns={txns} processingId={processingId} />
+        </div>
+      </main>
+      <AddTxnModal lang={lang} open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleSave} />
+      <TweaksPanel
+        open={editOpen}
+        onClose={() => { setEditOpen(false); window.parent.postMessage({ type:'__edit_mode_dismissed' }, '*'); }}
+        tweaks={tweaks}
+        setTweak={setTweak}
+      />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('app')).render(<App/>);
+</script>
+</body>
+</html>

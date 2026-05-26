@@ -2,9 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
+import {
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
@@ -20,6 +25,8 @@ import {
   type Transaction,
 } from "@/lib/mock-data";
 
+const PAGE_SIZE = 10;
+
 export default function TransactionsPage() {
   const t = useTranslations("transactions");
   const tCat = useTranslations("categories");
@@ -28,7 +35,9 @@ export default function TransactionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"all" | CategoryKey>("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all");
   const [items, setItems] = useState<Transaction[]>(MOCK_TRANSACTIONS);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const id = setTimeout(() => setLoading(false), 350);
@@ -36,27 +45,19 @@ export default function TransactionsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    return items.filter((t) => {
-      if (category !== "all" && t.category_key !== category) return false;
-      if (
-        query &&
-        !t.description.toLowerCase().includes(query.toLowerCase())
-      )
+    return items.filter((tx) => {
+      if (category !== "all" && tx.category_key !== category) return false;
+      if (typeFilter !== "all" && tx.type !== typeFilter) return false;
+      if (query && !tx.description.toLowerCase().includes(query.toLowerCase()))
         return false;
       return true;
     });
-  }, [items, query, category]);
+  }, [items, query, category, typeFilter]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, Transaction[]>();
-    for (const t of filtered) {
-      const key = t.date.slice(0, 7);
-      const arr = map.get(key) ?? [];
-      arr.push(t);
-      map.set(key, arr);
-    }
-    return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [filtered]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => setPage(1), [query, category, typeFilter]);
 
   function addTransaction(d: TransactionDraft) {
     const next: Transaction = {
@@ -71,32 +72,32 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <Button onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4" />
+          <Button size="sm" onClick={() => setModalOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
             {t("addNew")}
           </Button>
         }
       />
 
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="sticky top-0 z-10 flex flex-col gap-2 border-b border-zinc-200 bg-white/95 pb-3 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <Input
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+          <input
             placeholder={t("searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
+            className="h-9 w-full rounded-lg border border-zinc-200 bg-white pl-9 pr-3 text-sm outline-none placeholder:text-zinc-400 focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </div>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as "all" | CategoryKey)}
-          className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
         >
           <option value="all">{t("filterCategory")}</option>
           {CATEGORY_KEYS.map((k) => (
@@ -105,35 +106,86 @@ export default function TransactionsPage() {
             </option>
           ))}
         </select>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as "all" | "income" | "expense")}
+          className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+        >
+          <option value="all">{t("fieldType")}</option>
+          <option value="income">{t("typeIncome")}</option>
+          <option value="expense">{t("typeExpense")}</option>
+        </select>
       </div>
 
       {loading ? (
         <TableSkeleton />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title={tCommon("search") + "..."}
-          subtitle="No transactions match your filters."
+          title={t("noResults")}
+          subtitle={t("noResultsSub")}
+          action={
+            <Button size="sm" onClick={() => setModalOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              {t("addNew")}
+            </Button>
+          }
         />
       ) : (
-        <div className="space-y-6">
-          {grouped.map(([month, list]) => (
-            <section
-              key={month}
-              className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <header className="border-b border-zinc-100 px-5 py-3 dark:border-zinc-800">
-                <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                  {month}
-                </h3>
-              </header>
-              <div className="divide-y divide-zinc-100 px-2 dark:divide-zinc-800">
-                {list.map((t) => (
-                  <TransactionRow key={t.id} transaction={t} onClick={() => {}} />
-                ))}
+        <>
+          <div className="animate-slide-up overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[var(--shadow-sm)] dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="hidden border-b border-zinc-100 px-5 py-2.5 sm:grid sm:grid-cols-[6rem_1fr_auto_8rem] sm:items-center sm:gap-3 dark:border-zinc-800">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                {t("thDate")}
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                {t("thDescription")}
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                {t("thCategory")}
+              </span>
+              <span className="text-right text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                {t("thAmount")}
+              </span>
+            </div>
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {paged.map((tx) => (
+                <TransactionRow
+                  key={tx.id}
+                  transaction={tx}
+                  showActions
+                />
+              ))}
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-zinc-400">
+                {(page - 1) * PAGE_SIZE + 1}–
+                {Math.min(page * PAGE_SIZE, filtered.length)}{" "}
+                of {filtered.length}
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  {tCommon("back")}
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                >
+                  {tCommon("next")}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
               </div>
-            </section>
-          ))}
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       <TransactionModal
@@ -145,7 +197,7 @@ export default function TransactionsPage() {
   );
 }
 
-const SKELETON_WIDTHS = ["w-48", "w-56", "w-40", "w-64"];
+const SKELETON_WIDTHS = ["w-48", "w-56", "w-40", "w-64", "w-52", "w-44", "w-60", "w-36"];
 
 function TableSkeleton() {
   return (
@@ -159,7 +211,7 @@ function TableSkeleton() {
           className="grid grid-cols-[1fr_auto] items-center gap-3 px-2 py-3"
         >
           <div className="space-y-2">
-            <Skeleton className={`h-4 ${SKELETON_WIDTHS[i % 4]}`} />
+            <Skeleton className={`h-4 ${SKELETON_WIDTHS[i % 8]}`} />
             <Skeleton className="h-3 w-24" />
           </div>
           <Skeleton className="h-4 w-20" />
