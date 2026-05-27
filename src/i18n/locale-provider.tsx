@@ -30,6 +30,11 @@ const COOKIE_NAME = "sft-locale";
 function persistLocale(locale: Locale) {
   if (typeof document === "undefined") return;
   document.cookie = `${COOKIE_NAME}=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+  fetch("/api/user/language", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ language: locale }),
+  }).catch(() => {});
 }
 
 export function LocaleProvider({

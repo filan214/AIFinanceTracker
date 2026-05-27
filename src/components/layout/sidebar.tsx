@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/cn";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuth } from "@/lib/supabase/auth-context";
 
 type NavItem = {
   href: string;
@@ -65,6 +66,11 @@ export function Sidebar() {
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
   const tSidebar = useTranslations("sidebar");
+  const { user } = useAuth();
+
+  const displayName = user?.user_metadata?.name || user?.email?.split("@")[0] || "User";
+  const displayEmail = user?.email || "—";
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <aside className="hidden h-screen w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex"
@@ -147,14 +153,14 @@ export function Sidebar() {
 
         <div className="flex items-center gap-2.5 border-t border-zinc-100 px-2 pt-3 dark:border-zinc-800">
           <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-emerald-500 text-xs font-semibold text-white">
-            F
+            {initial}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[11px] font-medium text-zinc-900 dark:text-zinc-100">
-              Filan
+              {displayName}
             </p>
             <p className="truncate text-[11px] text-zinc-400">
-              filan@example.com
+              {displayEmail}
             </p>
           </div>
           <button className="text-zinc-400">

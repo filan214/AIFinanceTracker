@@ -1,13 +1,32 @@
 "use client";
 
 import { Bell, X, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { fetchAnomaly } from "@/lib/api";
+import { useLocale } from "@/i18n/locale-provider";
 
 export function AnomalyAlert() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
+  const { locale } = useLocale();
+
+  useEffect(() => {
+    fetchAnomaly(locale)
+      .then((result) => {
+        if (result) {
+          setText(result);
+          setOpen(true);
+        }
+      })
+      .catch(() => {
+        setText(t("anomalyBody"));
+        setOpen(true);
+      });
+  }, [locale, t]);
+
   if (!open) return null;
 
   return (
@@ -23,7 +42,7 @@ export function AnomalyAlert() {
           </span>
         </div>
         <p className="max-w-[720px] text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-          {t("anomalyBody")}
+          {text}
         </p>
         <div className="mt-2 flex gap-3.5">
           <button className="inline-flex items-center gap-1 text-xs font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100">

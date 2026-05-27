@@ -24,6 +24,10 @@ import {
   type CategoryKey,
   type Transaction,
 } from "@/lib/mock-data";
+import {
+  createTransaction as apiCreateTransaction,
+  categorizeTransaction,
+} from "@/lib/api";
 
 const PAGE_SIZE = 10;
 
@@ -59,16 +63,33 @@ export default function TransactionsPage() {
 
   useEffect(() => setPage(1), [query, category, typeFilter]);
 
-  function addTransaction(d: TransactionDraft) {
+  async function addTransaction(d: TransactionDraft) {
+    const tempId = `local-${Date.now()}`;
     const next: Transaction = {
-      id: `local-${Date.now()}`,
+      id: tempId,
       amount: d.amount,
       type: d.type,
       description: d.description,
-      category_key: d.category_key,
+      category_key: d.type === "income" ? "income" : "shopping",
       date: d.date,
     };
     setItems((prev) => [next, ...prev]);
+
+    try {
+      const created = await apiCreateTransaction(d);
+      setItems((prev) =>
+        prev.map((t) => (t.id === tempId ? { ...t, id: created.id } : t))
+      );
+      categorizeTransaction(created.id, d.description, d.type).then((cat) => {
+        setItems((prev) =>
+          prev.map((t) =>
+            t.id === created.id ? { ...t, category_key: cat } : t
+          )
+        );
+      });
+    } catch {
+      // keep optimistic local item on failure
+    }
   }
 
   return (

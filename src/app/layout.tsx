@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "next-themes";
 import { LocaleProvider, type Locale } from "@/i18n/locale-provider";
+import { AuthProvider } from "@/lib/supabase/auth-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -45,9 +46,11 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LocaleProvider initialLocale={initialLocale}>
-            {children}
-          </LocaleProvider>
+          <AuthProvider>
+            <LocaleProvider initialLocale={initialLocale}>
+              {children}
+            </LocaleProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

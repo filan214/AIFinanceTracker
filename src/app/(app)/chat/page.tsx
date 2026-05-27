@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Send, Sparkles, Trash2 } from "lucide-react";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { Skeleton } from "@/components/ui/skeleton";
+import { sendChatMessage } from "@/lib/api";
+import { useLocale } from "@/i18n/locale-provider";
 
 type Msg = { id: string; role: "user" | "ai"; content: string };
 
@@ -16,6 +18,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { locale } = useLocale();
 
   useEffect(() => {
     const id = setTimeout(() => setLoading(false), 300);
@@ -29,7 +32,7 @@ export default function ChatPage() {
     });
   }, [messages, pending]);
 
-  function send(text: string) {
+  async function send(text: string) {
     if (!text.trim()) return;
     const userMsg: Msg = {
       id: `u-${Date.now()}`,
@@ -39,17 +42,25 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setPending(true);
-    setTimeout(() => {
+
+    try {
+      const history = messages.map((m) => ({
+        role: m.role === "ai" ? "assistant" : "user",
+        content: m.content,
+      }));
+      const reply = await sendChatMessage(text.trim(), history, locale);
       setMessages((prev) => [
         ...prev,
-        {
-          id: `a-${Date.now()}`,
-          role: "ai",
-          content: t("mockReply"),
-        },
+        { id: `a-${Date.now()}`, role: "ai", content: reply },
       ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { id: `a-${Date.now()}`, role: "ai", content: t("mockReply") },
+      ]);
+    } finally {
       setPending(false);
-    }, 900);
+    }
   }
 
   if (loading) return <ChatSkeleton />;

@@ -17,12 +17,14 @@ import { PageHeader } from "@/components/layout/page-header";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/cn";
+import { useAuth } from "@/lib/supabase/auth-context";
 
 const ACCENT_COLORS = ["#10b981", "#6366f1", "#f43f5e", "#f59e0b", "#3b82f6"];
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const tNav = useTranslations("nav");
+  const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [anomalyAlerts, setAnomalyAlerts] = useState(true);
   const [monthlyReport, setMonthlyReport] = useState(true);
@@ -44,11 +46,11 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-lg font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-              F
+              {(user?.user_metadata?.name || user?.email || "U").charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="text-sm font-medium">Filan</p>
-              <p className="text-xs text-zinc-500">filan@example.com</p>
+              <p className="text-sm font-medium">{user?.user_metadata?.name || user?.email?.split("@")[0] || "User"}</p>
+              <p className="text-xs text-zinc-500">{user?.email || "—"}</p>
             </div>
           </div>
           <Button variant="secondary" size="sm">
@@ -106,7 +108,7 @@ export default function SettingsPage() {
         </Row>
         <div className="my-3 border-t border-zinc-100 dark:border-zinc-800" />
         <Row label={tNav("logout")} desc={t("logoutDesc")}>
-          <Button variant="secondary" size="sm" onClick={() => router.push("/")}>
+          <Button variant="secondary" size="sm" onClick={async () => { await signOut(); router.push("/"); }}>
             <LogOut className="h-3.5 w-3.5" />
             {tNav("logout")}
           </Button>
