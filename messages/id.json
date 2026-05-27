@@ -170,6 +170,9 @@
     "deleteData": "Hapus semua data",
     "deleteDataDesc": "Hapus semua transaksi dan laporan secara permanen.",
     "deleteBtn": "Hapus",
+    "deleteConfirm": "Kamu yakin?",
+    "deleteYes": "Ya, hapus",
+    "deleteNo": "Batal",
     "logoutDesc": "Keluar dari akun di perangkat ini."
   },
   "sidebar": {

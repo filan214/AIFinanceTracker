@@ -170,6 +170,9 @@
     "deleteData": "Delete all data",
     "deleteDataDesc": "Permanently delete all your transactions and reports.",
     "deleteBtn": "Delete",
+    "deleteConfirm": "Are you sure?",
+    "deleteYes": "Yes, delete",
+    "deleteNo": "Cancel",
     "logoutDesc": "Sign out of your account on this device."
   },
   "sidebar": {

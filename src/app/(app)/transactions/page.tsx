@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Plus,
   Search,
   ChevronLeft,
   ChevronRight,
-  ListFilter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,12 +19,13 @@ import {
 } from "@/components/transactions/transaction-modal";
 import {
   CATEGORY_KEYS,
-  MOCK_TRANSACTIONS,
   type CategoryKey,
   type Transaction,
 } from "@/lib/mock-data";
 import {
+  fetchTransactions,
   createTransaction as apiCreateTransaction,
+  deleteTransaction as apiDeleteTransaction,
   categorizeTransaction,
 } from "@/lib/api";
 
@@ -39,14 +39,26 @@ export default function TransactionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"all" | CategoryKey>("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">("all");
-  const [items, setItems] = useState<Transaction[]>(MOCK_TRANSACTIONS);
+  const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
+    "all"
+  );
+  const [items, setItems] = useState<Transaction[]>([]);
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    const id = setTimeout(() => setLoading(false), 350);
-    return () => clearTimeout(id);
+  const loadTransactions = useCallback(async () => {
+    try {
+      const res = await fetchTransactions({ limit: 500 });
+      setItems(res.data as Transaction[]);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   const filtered = useMemo(() => {
     return items.filter((tx) => {
@@ -88,7 +100,16 @@ export default function TransactionsPage() {
         );
       });
     } catch {
-      // keep optimistic local item on failure
+      // keep optimistic local item
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setItems((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await apiDeleteTransaction(id);
+    } catch {
+      loadTransactions();
     }
   }
 
@@ -117,7 +138,9 @@ export default function TransactionsPage() {
         </div>
         <select
           value={category}
-          onChange={(e) => setCategory(e.target.value as "all" | CategoryKey)}
+          onChange={(e) =>
+            setCategory(e.target.value as "all" | CategoryKey)
+          }
           className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
         >
           <option value="all">{t("filterCategory")}</option>
@@ -129,7 +152,9 @@ export default function TransactionsPage() {
         </select>
         <select
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as "all" | "income" | "expense")}
+          onChange={(e) =>
+            setTypeFilter(e.target.value as "all" | "income" | "expense")
+          }
           className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
         >
           <option value="all">{t("fieldType")}</option>
@@ -174,6 +199,7 @@ export default function TransactionsPage() {
                   key={tx.id}
                   transaction={tx}
                   showActions
+                  onDelete={() => handleDelete(tx.id)}
                 />
               ))}
             </div>
@@ -183,8 +209,8 @@ export default function TransactionsPage() {
             <div className="flex items-center justify-between">
               <span className="text-xs text-zinc-400">
                 {(page - 1) * PAGE_SIZE + 1}–
-                {Math.min(page * PAGE_SIZE, filtered.length)}{" "}
-                of {filtered.length}
+                {Math.min(page * PAGE_SIZE, filtered.length)} of{" "}
+                {filtered.length}
               </span>
               <div className="flex gap-1.5">
                 <button
@@ -196,7 +222,9 @@ export default function TransactionsPage() {
                   {tCommon("back")}
                 </button>
                 <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={page === totalPages}
                   className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-600 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
                 >
@@ -218,7 +246,16 @@ export default function TransactionsPage() {
   );
 }
 
-const SKELETON_WIDTHS = ["w-48", "w-56", "w-40", "w-64", "w-52", "w-44", "w-60", "w-36"];
+const SKELETON_WIDTHS = [
+  "w-48",
+  "w-56",
+  "w-40",
+  "w-64",
+  "w-52",
+  "w-44",
+  "w-60",
+  "w-36",
+];
 
 function TableSkeleton() {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Plus,
@@ -21,16 +21,76 @@ import { InsightCard } from "@/components/dashboard/insight-card";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
 import { DailyLine } from "@/components/dashboard/daily-line";
 import { TransactionRow } from "@/components/transactions/transaction-row";
-import { TransactionModal } from "@/components/transactions/transaction-modal";
-import { CategoryBadge } from "@/components/category-badge";
-import { useLocale } from "@/i18n/locale-provider";
-import { formatCurrency } from "@/lib/format";
 import {
-  currentMonthKey,
-  getTransactionsForMonth,
-  previousMonthKey,
-  summarizeMonth,
-} from "@/lib/mock-data";
+  TransactionModal,
+  type TransactionDraft,
+} from "@/components/transactions/transaction-modal";
+import { useLocale } from "@/i18n/locale-provider";
+import {
+  fetchTransactions,
+  createTransaction as apiCreateTransaction,
+  categorizeTransaction,
+  exportTransactionsCsv,
+  type ApiTransaction,
+} from "@/lib/api";
+import type { CategoryKey } from "@/lib/mock-data";
+
+type Summary = {
+  income: number;
+  expense: number;
+  balance: number;
+  byCategory: { category_key: CategoryKey; total: number }[];
+  dailyTotals: { day: string; total: number }[];
+};
+
+const EMPTY: Summary = {
+  income: 0,
+  expense: 0,
+  balance: 0,
+  byCategory: [],
+  dailyTotals: [],
+};
+
+function summarize(
+  txns: { amount: number; type: string; category_key: string; date: string }[]
+): Summary {
+  let income = 0;
+  let expense = 0;
+  const catMap = new Map<CategoryKey, number>();
+  const dayMap = new Map<string, number>();
+  for (const t of txns) {
+    if (t.type === "income") {
+      income += t.amount;
+    } else {
+      expense += t.amount;
+      catMap.set(
+        t.category_key as CategoryKey,
+        (catMap.get(t.category_key as CategoryKey) ?? 0) + t.amount
+      );
+      dayMap.set(t.date, (dayMap.get(t.date) ?? 0) + t.amount);
+    }
+  }
+  return {
+    income,
+    expense,
+    balance: income - expense,
+    byCategory: Array.from(catMap.entries())
+      .map(([category_key, total]) => ({ category_key, total }))
+      .sort((a, b) => b.total - a.total),
+    dailyTotals: Array.from(dayMap.entries())
+      .map(([day, total]) => ({ day, total }))
+      .sort((a, b) => (a.day < b.day ? -1 : 1)),
+  };
+}
+
+const MONTH_EN = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+const MONTH_ID = [
+  "Januari","Februari","Maret","April","Mei","Juni",
+  "Juli","Agustus","September","Oktober","November","Desember",
+];
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
@@ -38,24 +98,78 @@ export default function DashboardPage() {
   const { locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [monthIdx, setMonthIdx] = useState(4);
-  const [year] = useState(2026);
+
+  const now = new Date();
+  const [monthIdx, setMonthIdx] = useState(now.getMonth());
+  const [year, setYear] = useState(now.getFullYear());
+
+  const [current, setCurrent] = useState<Summary>(EMPTY);
+  const [previous, setPrevious] = useState<Summary>(EMPTY);
+  const [recent, setRecent] = useState<ApiTransaction[]>([]);
+
+  const monthKey = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
+  const prevYear = monthIdx === 0 ? year - 1 : year;
+  const prevMonthIdx = monthIdx === 0 ? 11 : monthIdx - 1;
+  const prevMonthKey = `${prevYear}-${String(prevMonthIdx + 1).padStart(2, "0")}`;
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [curRes, prevRes] = await Promise.all([
+        fetchTransactions({ month: monthKey, limit: 500 }),
+        fetchTransactions({ month: prevMonthKey, limit: 500 }),
+      ]);
+      setCurrent(summarize(curRes.data));
+      setPrevious(summarize(prevRes.data));
+      setRecent(curRes.data.slice(0, 8));
+    } catch {
+      setCurrent(EMPTY);
+      setPrevious(EMPTY);
+      setRecent([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [monthKey, prevMonthKey]);
 
   useEffect(() => {
-    const id = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(id);
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
-  const current = summarizeMonth(currentMonthKey());
-  const previous = summarizeMonth(previousMonthKey());
+  function handleMonthChange(newIdx: number) {
+    if (newIdx < 0) {
+      setMonthIdx(11);
+      setYear((y) => y - 1);
+    } else if (newIdx > 11) {
+      setMonthIdx(0);
+      setYear((y) => y + 1);
+    } else {
+      setMonthIdx(newIdx);
+    }
+  }
+
   const expenseChange = previous.expense
-    ? Math.round(((current.expense - previous.expense) / previous.expense) * 100)
+    ? Math.round(
+        ((current.expense - previous.expense) / previous.expense) * 100
+      )
     : 0;
   const incomeChange = previous.income
-    ? Math.round(((current.income - previous.income) / previous.income) * 100)
+    ? Math.round(
+        ((current.income - previous.income) / previous.income) * 100
+      )
     : 0;
 
-  const recent = getTransactionsForMonth(currentMonthKey()).slice(0, 8);
+  async function addTransaction(d: TransactionDraft) {
+    try {
+      const created = await apiCreateTransaction(d);
+      categorizeTransaction(created.id, d.description, d.type).catch(() => {});
+      fetchData();
+    } catch {
+      // silent
+    }
+    setModalOpen(false);
+  }
+
+  const monthLabel = (locale === "id" ? MONTH_ID : MONTH_EN)[monthIdx];
 
   if (loading) return <DashboardSkeleton />;
 
@@ -70,9 +184,16 @@ export default function DashboardPage() {
             <MonthPicker
               monthIdx={monthIdx}
               year={year}
-              onChange={(n) => setMonthIdx(((n % 12) + 12) % 12)}
+              onChange={handleMonthChange}
             />
-            <Button variant="secondary" size="sm">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
+                const res = await fetchTransactions({ month: monthKey, limit: 500 });
+                exportTransactionsCsv(res.data, `transactions-${monthKey}.csv`);
+              }}
+            >
               <Download className="h-3.5 w-3.5" />
               {locale === "id" ? "Ekspor" : "Export"}
             </Button>
@@ -86,7 +207,10 @@ export default function DashboardPage() {
 
       <AnomalyAlert />
 
-      <div className="grid gap-3.5 sm:grid-cols-3" style={{ gridTemplateColumns: "1fr 1fr 1.4fr" }}>
+      <div
+        className="grid gap-3.5 sm:grid-cols-3"
+        style={{ gridTemplateColumns: "1fr 1fr 1.4fr" }}
+      >
         <MetricCard
           icon={ArrowUpRight}
           label={t("totalIncome")}
@@ -110,7 +234,10 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-3.5" style={{ gridTemplateColumns: "1.05fr 1.4fr" }}>
+      <div
+        className="grid gap-3.5"
+        style={{ gridTemplateColumns: "1.05fr 1.4fr" }}
+      >
         <CategoryDonut data={current.byCategory} />
         <DailyLine data={current.dailyTotals} />
       </div>
@@ -126,8 +253,8 @@ export default function DashboardPage() {
             <p className="mt-0.5 text-[11px] text-zinc-400">
               {recent.length}{" "}
               {locale === "id"
-                ? "transaksi · Mei 2026"
-                : "transactions · May 2026"}
+                ? `transaksi · ${monthLabel} ${year}`
+                : `transactions · ${monthLabel} ${year}`}
             </p>
           </div>
           <Link
@@ -138,16 +265,24 @@ export default function DashboardPage() {
           </Link>
         </div>
         <div className="max-h-[520px] overflow-auto">
-          {recent.map((tx) => (
-            <TransactionRow key={tx.id} transaction={tx} />
-          ))}
+          {recent.length === 0 ? (
+            <div className="px-5 py-10 text-center text-sm text-zinc-400">
+              {locale === "id"
+                ? "Belum ada transaksi bulan ini."
+                : "No transactions this month."}
+            </div>
+          ) : (
+            recent.map((tx) => (
+              <TransactionRow key={tx.id} transaction={tx} />
+            ))
+          )}
         </div>
       </div>
 
       <TransactionModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSave={() => setModalOpen(false)}
+        onSave={addTransaction}
       />
     </div>
   );

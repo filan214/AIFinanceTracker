@@ -134,3 +134,27 @@ export async function updateLanguagePreference(
     body: JSON.stringify({ language }),
   });
 }
+
+export async function deleteUserData(): Promise<void> {
+  const res = await fetch("/api/user/data", { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete data");
+}
+
+export function exportTransactionsCsv(
+  transactions: ApiTransaction[],
+  filename: string
+) {
+  const header = "Date,Description,Category,Type,Amount";
+  const rows = transactions.map(
+    (t) =>
+      `${t.date},"${t.description.replace(/"/g, '""')}",${t.category_key},${t.type},${t.amount}`
+  );
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

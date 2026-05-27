@@ -15,12 +15,14 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
   signOut: async () => {},
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -49,9 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, [supabase]);
 
+  const refreshUser = useCallback(async () => {
+    const { data } = await supabase.auth.getUser();
+    setUser(data.user);
+  }, [supabase]);
+
   const value = useMemo(
-    () => ({ user, loading, signOut }),
-    [user, loading, signOut]
+    () => ({ user, loading, signOut, refreshUser }),
+    [user, loading, signOut, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
