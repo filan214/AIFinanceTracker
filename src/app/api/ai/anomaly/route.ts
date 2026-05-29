@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { askGemini } from "@/lib/gemini";
+import { askLLM } from "@/lib/llm";
 
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabase();
@@ -50,7 +50,7 @@ Data (last 4 weeks): ${JSON.stringify(weeklyData)}
 - If none: respond exactly "normal"`;
 
   try {
-    const result = await askGemini(prompt);
+    const result = await askLLM(prompt, { maxOutputTokens: 256 });
 
     if (result.toLowerCase().trim() === "normal") {
       return NextResponse.json({ anomaly: null });

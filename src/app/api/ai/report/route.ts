@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { askGemini } from "@/lib/gemini";
+import { askLLM } from "@/lib/llm";
 
 export async function GET(req: NextRequest) {
   const supabase = await createServerSupabase();
@@ -92,7 +92,7 @@ ${prevMonth} data: ${JSON.stringify(prevData)}
 - Cover: overall change %, biggest category change, 2–3 tips for next month`;
 
   try {
-    const content = await askGemini(prompt);
+    const content = await askLLM(prompt, { maxOutputTokens: 512 });
 
     const { data } = await supabase
       .from("ai_insights")

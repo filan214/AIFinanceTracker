@@ -7,9 +7,11 @@ import { cn } from "@/lib/cn";
 export function ChatBubble({
   role,
   content,
+  error,
 }: {
   role: "user" | "ai";
   content: string;
+  error?: boolean;
 }) {
   const t = useTranslations("chat");
   const isAi = role === "ai";
@@ -33,9 +35,11 @@ export function ChatBubble({
         <div
           className={cn(
             "px-4 py-2.5 text-sm leading-relaxed",
-            isAi
-              ? "rounded-xl rounded-tl-none bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-              : "rounded-xl rounded-tr-none bg-emerald-600 text-white"
+            isAi && error
+              ? "rounded-xl rounded-tl-none border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-300"
+              : isAi
+                ? "rounded-xl rounded-tl-none bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                : "rounded-xl rounded-tr-none bg-emerald-600 text-white"
           )}
         >
           {content}

@@ -34,7 +34,7 @@ export function TransactionModal({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [category, setCategory] = useState<CategoryKey>("food");
+  const [category, setCategory] = useState<CategoryKey>("shopping");
 
   useEffect(() => {
     if (open) {
@@ -42,7 +42,7 @@ export function TransactionModal({
       setAmount("");
       setDescription("");
       setDate(new Date().toISOString().slice(0, 10));
-      setCategory("food");
+      setCategory("shopping");
     }
   }, [open]);
 

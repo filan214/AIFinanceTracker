@@ -9,7 +9,11 @@
       "PowerShell(Start-Sleep -Seconds 8; try { \\(Invoke-WebRequest -Uri \"http://localhost:3000\" -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { \"Server not ready yet: $_\" })",
       "PowerShell($html = \\(Invoke-WebRequest -Uri \"http://localhost:3000/dashboard\" -UseBasicParsing -TimeoutSec 10\\).Content; @\\(\"LogoMark\", \"animate-slide-up\", \"animate-pulse-dot\", \"font-mono\", \"shadow-\\\\[var\\\\\\(--shadow\", \"JetBrains\", \"Smart Finn Track\"\\) | ForEach-Object { $found = $html -match $_; \"$_ -> found: $found\" })",
       "Bash(timeout 8)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "PowerShell(Start-Sleep -Seconds 15; try { $r = Invoke-WebRequest -Uri \"http://localhost:3000/chat\" -UseBasicParsing -MaximumRedirection 5 -TimeoutSec 30; \"Chat: $\\($r.StatusCode\\)\" } catch { \"Error: $_\" })",
+      "PowerShell(Get-Process *)",
+      "Bash(npx next *)",
+      "Bash(node *)"
     ]
   }
 }

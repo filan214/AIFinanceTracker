@@ -145,7 +145,18 @@
     "send": "Send",
     "aiLabel": "Smart Finn Track AI",
     "youLabel": "You",
-    "mockReply": "Based on your last 30 days, you spent Rp 820,000 on Food — about 23% of your total expenses. That's roughly Rp 27,000 per day, which is in line with the previous month."
+    "mockReply": "Based on your last 30 days, you spent Rp 820,000 on Food — about 23% of your total expenses. That's roughly Rp 27,000 per day, which is in line with the previous month.",
+    "errorReply": "Sorry, I couldn't process your request. Please try again.",
+    "quotaError": "AI daily limit reached (20 requests/day on free tier). The quota resets at midnight. Please try again later.",
+    "retry": "Retry",
+    "fetching": "Fetching {label}...",
+    "fetched": "Used {label}",
+    "toolGetTransactions": "your transactions",
+    "toolGetMonthlySummary": "monthly summary",
+    "toolGetCategoryBreakdown": "spending breakdown",
+    "toolGetSpendingTrend": "spending trend",
+    "toolGetTopExpenses": "top expenses",
+    "toolGetBalance": "balance data"
   },
   "settings": {
     "title": "Settings",

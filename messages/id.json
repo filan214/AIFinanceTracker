@@ -145,7 +145,18 @@
     "send": "Kirim",
     "aiLabel": "Smart Finn Track AI",
     "youLabel": "Kamu",
-    "mockReply": "Berdasarkan 30 hari terakhir, kamu menghabiskan Rp 820.000 untuk Makanan — sekitar 23% dari total pengeluaran. Itu sekitar Rp 27.000 per hari, masih sejalan dengan bulan sebelumnya."
+    "mockReply": "Berdasarkan 30 hari terakhir, kamu menghabiskan Rp 820.000 untuk Makanan — sekitar 23% dari total pengeluaran. Itu sekitar Rp 27.000 per hari, masih sejalan dengan bulan sebelumnya.",
+    "errorReply": "Maaf, tidak bisa memproses permintaanmu. Silakan coba lagi.",
+    "quotaError": "Batas harian AI tercapai (20 permintaan/hari di tier gratis). Kuota akan direset tengah malam. Silakan coba lagi nanti.",
+    "retry": "Coba lagi",
+    "fetching": "Mengambil {label}...",
+    "fetched": "Menggunakan {label}",
+    "toolGetTransactions": "data transaksi kamu",
+    "toolGetMonthlySummary": "ringkasan bulanan",
+    "toolGetCategoryBreakdown": "rincian per kategori",
+    "toolGetSpendingTrend": "tren pengeluaran",
+    "toolGetTopExpenses": "pengeluaran terbesar",
+    "toolGetBalance": "data saldo"
   },
   "settings": {
     "title": "Pengaturan",

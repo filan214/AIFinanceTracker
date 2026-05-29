@@ -110,21 +110,6 @@ export async function generateReport(
   return json.data;
 }
 
-export async function sendChatMessage(
-  message: string,
-  history: { role: string; content: string }[],
-  language: string
-): Promise<string> {
-  const res = await fetch("/api/ai/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history, language }),
-  });
-  if (!res.ok) throw new Error("Failed to send message");
-  const json = await res.json();
-  return json.reply;
-}
-
 export async function updateLanguagePreference(
   language: string
 ): Promise<void> {

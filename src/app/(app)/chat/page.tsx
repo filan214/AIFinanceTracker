@@ -2,26 +2,40 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Send, Sparkles, Trash2 } from "lucide-react";
+import { Send, Sparkles, Trash2, RefreshCw } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { ChatBubble } from "@/components/chat/chat-bubble";
 import { Skeleton } from "@/components/ui/skeleton";
-import { sendChatMessage } from "@/lib/api";
 import { useLocale } from "@/i18n/locale-provider";
 
-type Msg = { id: string; role: "user" | "ai"; content: string };
+const TOOL_LABEL_KEYS: Record<string, string> = {
+  getTransactions: "toolGetTransactions",
+  getMonthlySummary: "toolGetMonthlySummary",
+  getCategoryBreakdown: "toolGetCategoryBreakdown",
+  getSpendingTrend: "toolGetSpendingTrend",
+  getTopExpenses: "toolGetTopExpenses",
+  getBalance: "toolGetBalance",
+};
 
 export default function ChatPage() {
   const t = useTranslations("chat");
   const tCommon = useTranslations("common");
-  const [loading, setLoading] = useState(true);
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [input, setInput] = useState("");
-  const [pending, setPending] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const { locale } = useLocale();
+  const [mounted, setMounted] = useState(false);
+  const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { messages, sendMessage, status, setMessages, regenerate, error } =
+    useChat({
+      transport: new DefaultChatTransport({
+        api: "/api/ai/chat",
+        body: { language: locale },
+      }),
+    });
 
   useEffect(() => {
-    const id = setTimeout(() => setLoading(false), 300);
+    const id = setTimeout(() => setMounted(true), 300);
     return () => clearTimeout(id);
   }, []);
 
@@ -30,40 +44,18 @@ export default function ChatPage() {
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages, pending]);
+  }, [messages, status]);
 
-  async function send(text: string) {
-    if (!text.trim()) return;
-    const userMsg: Msg = {
-      id: `u-${Date.now()}`,
-      role: "user",
-      content: text.trim(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
+  const isBusy = status === "submitted" || status === "streaming";
+
+  function submit(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed || isBusy) return;
     setInput("");
-    setPending(true);
-
-    try {
-      const history = messages.map((m) => ({
-        role: m.role === "ai" ? "assistant" : "user",
-        content: m.content,
-      }));
-      const reply = await sendChatMessage(text.trim(), history, locale);
-      setMessages((prev) => [
-        ...prev,
-        { id: `a-${Date.now()}`, role: "ai", content: reply },
-      ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { id: `a-${Date.now()}`, role: "ai", content: t("mockReply") },
-      ]);
-    } finally {
-      setPending(false);
-    }
+    sendMessage({ text: trimmed });
   }
 
-  if (loading) return <ChatSkeleton />;
+  if (!mounted) return <ChatSkeleton />;
 
   return (
     <div className="flex h-[calc(100vh-9rem)] flex-col lg:h-[calc(100vh-4rem)]">
@@ -90,13 +82,70 @@ export default function ChatPage() {
         className="flex-1 overflow-y-auto bg-white p-5 dark:bg-zinc-900"
       >
         {messages.length === 0 ? (
-          <ChatEmpty onPick={(p) => send(p)} />
+          <ChatEmpty onPick={submit} />
         ) : (
           <div className="space-y-5">
-            {messages.map((m) => (
-              <ChatBubble key={m.id} role={m.role} content={m.content} />
-            ))}
-            {pending && <TypingIndicator />}
+            {messages.map((m) => {
+              const text = m.parts
+                .filter((p) => p.type === "text")
+                .map((p) => (p as { text: string }).text)
+                .join("");
+              const toolParts = m.parts.filter(
+                (p) =>
+                  (typeof p.type === "string" && p.type.startsWith("tool-")) ||
+                  p.type === "dynamic-tool"
+              );
+              return (
+                <div key={m.id} className="space-y-2">
+                  {toolParts.map((p, i) => {
+                    const part = p as {
+                      type: string;
+                      toolName?: string;
+                      state?: string;
+                    };
+                    const name =
+                      part.toolName ||
+                      (part.type.startsWith("tool-")
+                        ? part.type.slice(5)
+                        : "");
+                    const labelKey = TOOL_LABEL_KEYS[name];
+                    const isRunning =
+                      part.state === "input-streaming" ||
+                      part.state === "input-available";
+                    return (
+                      <ToolIndicator
+                        key={i}
+                        label={labelKey ? t(labelKey) : name}
+                        running={isRunning}
+                      />
+                    );
+                  })}
+                  {text && (
+                    <ChatBubble
+                      role={m.role === "user" ? "user" : "ai"}
+                      content={text}
+                    />
+                  )}
+                </div>
+              );
+            })}
+            {status === "submitted" && <TypingIndicator />}
+            {status === "error" && (
+              <div>
+                <ChatBubble
+                  role="ai"
+                  content={error?.message || t("errorReply")}
+                  error
+                />
+                <button
+                  onClick={() => regenerate()}
+                  className="ml-9 mt-1 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  {t("retry")}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -104,7 +153,7 @@ export default function ChatPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          send(input);
+          submit(input);
         }}
         className="flex gap-2 border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
       >
@@ -112,11 +161,12 @@ export default function ChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={t("placeholder")}
-          className="h-10 flex-1 rounded-lg border border-zinc-200 bg-white px-4 text-sm placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          disabled={isBusy}
+          className="h-10 flex-1 rounded-lg border border-zinc-200 bg-white px-4 text-sm placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none disabled:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:disabled:bg-zinc-900"
         />
         <button
           type="submit"
-          disabled={!input.trim() || pending}
+          disabled={!input.trim() || isBusy}
           className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-700 disabled:bg-emerald-600/40"
         >
           <Send className="h-4 w-4" />
@@ -127,17 +177,39 @@ export default function ChatPage() {
   );
 }
 
-function TypingIndicator() {
+function ToolIndicator({ label, running }: { label: string; running: boolean }) {
   const t = useTranslations("chat");
+  return (
+    <div className="ml-9 inline-flex items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 text-[11px] text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
+      {running ? (
+        <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+      ) : (
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/60" />
+      )}
+      <span>{running ? t("fetching", { label }) : t("fetched", { label })}</span>
+    </div>
+  );
+}
+
+function TypingIndicator() {
   return (
     <div className="flex items-center gap-2.5">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
         <Sparkles className="h-3.5 w-3.5" />
       </div>
       <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm bg-zinc-100 px-4 py-2.5 dark:bg-zinc-800">
-        <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-zinc-400" style={{ animationDelay: "0ms" }} />
-        <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-zinc-400" style={{ animationDelay: "200ms" }} />
-        <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-zinc-400" style={{ animationDelay: "400ms" }} />
+        <span
+          className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-zinc-400"
+          style={{ animationDelay: "0ms" }}
+        />
+        <span
+          className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-zinc-400"
+          style={{ animationDelay: "200ms" }}
+        />
+        <span
+          className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-zinc-400"
+          style={{ animationDelay: "400ms" }}
+        />
       </div>
     </div>
   );
