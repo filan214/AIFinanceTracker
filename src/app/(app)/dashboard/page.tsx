@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
@@ -33,7 +34,9 @@ import {
   exportTransactionsCsv,
   type ApiTransaction,
 } from "@/lib/api";
+import { ANOMALY_CACHE_KEY } from "@/lib/anomaly-cache";
 import type { CategoryKey } from "@/lib/mock-data";
+import type { AnomalyResult } from "@/types/anomaly";
 
 type Summary = {
   income: number;
@@ -96,8 +99,12 @@ export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const tCommon = useTranslations("common");
   const { locale } = useLocale();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [anomaly, setAnomaly] = useState<AnomalyResult | null>(null);
+  const [anomalyDismissed, setAnomalyDismissed] = useState(false);
+  const [anomalyRefresh, setAnomalyRefresh] = useState(0);
 
   const now = new Date();
   const [monthIdx, setMonthIdx] = useState(now.getMonth());
@@ -135,6 +142,48 @@ export default function DashboardPage() {
     fetchData();
   }, [fetchData]);
 
+  // Fetch the structured anomaly once per day (cached in sessionStorage).
+  useEffect(() => {
+    let cancelled = false;
+    const today = new Date().toISOString().slice(0, 10);
+
+    try {
+      const cached = sessionStorage.getItem(ANOMALY_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as { date: string; result: AnomalyResult };
+        if (parsed.date === today) {
+          setAnomaly(parsed.result);
+          return;
+        }
+      }
+    } catch {}
+
+    (async () => {
+      try {
+        const res = await fetch("/api/ai/anomaly", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ language: locale }),
+        });
+        const result = (await res.json()) as AnomalyResult;
+        if (cancelled) return;
+        setAnomaly(result);
+        try {
+          sessionStorage.setItem(
+            ANOMALY_CACHE_KEY,
+            JSON.stringify({ date: today, result })
+          );
+        } catch {}
+      } catch {}
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, anomalyRefresh]);
+
+  const activeAnomaly = anomaly?.detected ? anomaly : null;
+
   function handleMonthChange(newIdx: number) {
     if (newIdx < 0) {
       setMonthIdx(11);
@@ -163,6 +212,10 @@ export default function DashboardPage() {
       const created = await apiCreateTransaction(d);
       categorizeTransaction(created.id, d.description, d.type).catch(() => {});
       fetchData();
+      // Re-run anomaly detection so an in-place add reflects in the alert
+      // without a manual refresh (cache was cleared by createTransaction).
+      setAnomalyDismissed(false);
+      setAnomalyRefresh((n) => n + 1);
     } catch {
       // silent
     }
@@ -205,7 +258,19 @@ export default function DashboardPage() {
         }
       />
 
-      <AnomalyAlert />
+      {activeAnomaly && !anomalyDismissed && (
+        <AnomalyAlert
+          anomaly={activeAnomaly}
+          lang={locale}
+          onDismiss={() => setAnomalyDismissed(true)}
+          onReviewTransactions={() =>
+            router.push(`/transactions?category=${activeAnomaly.category}`)
+          }
+          onAskAdvisor={(prefill) =>
+            router.push(`/chat?q=${encodeURIComponent(prefill)}`)
+          }
+        />
+      )}
 
       <div
         className="grid gap-3.5 sm:grid-cols-3"

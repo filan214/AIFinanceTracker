@@ -60,6 +60,15 @@ export default function TransactionsPage() {
     loadTransactions();
   }, [loadTransactions]);
 
+  // Pre-apply the category filter when arriving from a deep link
+  // (e.g. dashboard anomaly → /transactions?category=entertainment).
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get("category");
+    if (param && (CATEGORY_KEYS as string[]).includes(param)) {
+      setCategory(param as CategoryKey);
+    }
+  }, []);
+
   const filtered = useMemo(() => {
     return items.filter((tx) => {
       if (category !== "all" && tx.category_key !== category) return false;

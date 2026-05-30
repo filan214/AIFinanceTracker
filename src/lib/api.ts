@@ -1,4 +1,5 @@
 import type { CategoryKey, TransactionType } from "./mock-data";
+import { clearAnomalyCache } from "./anomaly-cache";
 
 export type ApiTransaction = {
   id: string;
@@ -44,12 +45,14 @@ export async function createTransaction(data: {
   });
   if (!res.ok) throw new Error("Failed to create transaction");
   const json = await res.json();
+  clearAnomalyCache();
   return json.data;
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
   const res = await fetch(`/api/transactions?id=${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error("Failed to delete transaction");
+  clearAnomalyCache();
 }
 
 export async function categorizeTransaction(

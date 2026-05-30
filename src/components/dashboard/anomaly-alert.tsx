@@ -1,114 +1,195 @@
 "use client";
 
-import { Bell, X, ArrowRight, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { fetchAnomaly } from "@/lib/api";
-import { useLocale } from "@/i18n/locale-provider";
+import { Bell, ListFilter, Sparkles, X } from "lucide-react";
+import type { AnomalyResult } from "@/types/anomaly";
+import { formatCurrency, formatSignedCurrency } from "@/lib/format";
 
-const CACHE_KEY = "anomaly-cache";
+type DetectedAnomaly = Extract<AnomalyResult, { detected: true }>;
 
-function getCached(): { text: string; date: string } | null {
-  try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed.date === new Date().toISOString().slice(0, 10)) return parsed;
-    return null;
-  } catch {
-    return null;
-  }
-}
+const COPY = {
+  title: { id: "Pengeluaran tidak biasa terdeteksi", en: "Unusual spending detected" },
+  needs_attention: { id: "PERLU PERHATIAN", en: "NEEDS ATTENTION" },
+  this_week: { id: "Minggu ini", en: "This week" },
+  typical: { id: "Rata-rata", en: "Typical" },
+  triggered: { id: "{n} TRANSAKSI MEMICU ALERT INI", en: "{n} TRANSACTIONS TRIGGERED THIS ALERT" },
+  review: { id: "Lihat transaksi", en: "Review transactions" },
+  ask_advisor: { id: "Tanya Advisor", en: "Ask Advisor" },
+  dismiss: { id: "Abaikan", en: "Dismiss" },
+  new_badge: { id: "Baru", en: "New" },
+};
 
-function setCache(text: string) {
-  try {
-    sessionStorage.setItem(
-      CACHE_KEY,
-      JSON.stringify({ text, date: new Date().toISOString().slice(0, 10) })
-    );
-  } catch {}
-}
+export function AnomalyAlert({
+  anomaly,
+  onDismiss,
+  onReviewTransactions,
+  onAskAdvisor,
+  lang,
+}: {
+  anomaly: DetectedAnomaly;
+  onDismiss: () => void;
+  onReviewTransactions: () => void;
+  onAskAdvisor: (prefill: string) => void;
+  lang: "id" | "en";
+}) {
+  const c = (k: keyof typeof COPY) => COPY[k][lang];
 
-export function AnomalyAlert() {
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
-  const t = useTranslations("dashboard");
-  const tCommon = useTranslations("common");
-  const { locale } = useLocale();
+  const max = Math.max(anomaly.thisWeek, anomaly.typical, 1);
+  const thisWeekPct = Math.round((anomaly.thisWeek / max) * 100);
+  const typicalPct = Math.round((anomaly.typical / max) * 100);
+  const pctLabel = `${anomaly.direction === "down" ? "−" : "+"}${anomaly.percentageChange}%`;
 
-  useEffect(() => {
-    let cancelled = false;
+  const askPrefill =
+    lang === "en"
+      ? `Why did my ${anomaly.categoryLabel} spending spike this week?`
+      : `Kenapa pengeluaran ${anomaly.categoryLabel} saya naik minggu ini?`;
 
-    const cached = getCached();
-    if (cached) {
-      setText(cached.text);
-      setOpen(true);
-      return;
-    }
-
-    fetchAnomaly(locale)
-      .then((result) => {
-        if (cancelled) return;
-        if (result) {
-          setText(result);
-          setOpen(true);
-          setCache(result);
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [locale]);
-
-  if (!open) return null;
+  const triggered = anomaly.triggeredTransactions ?? [];
 
   return (
-    <div className="animate-slide-up group relative overflow-hidden rounded-xl border border-amber-200/70 bg-gradient-to-br from-amber-50/60 via-white to-white p-4 shadow-[var(--shadow-sm)] dark:border-amber-900/30 dark:from-amber-950/20 dark:via-zinc-900 dark:to-zinc-900">
+    <div className="animate-slide-up relative flex flex-col gap-3.5 overflow-hidden rounded-xl border border-zinc-200 border-l-4 border-l-amber-500 bg-white p-5 shadow-[var(--shadow-md)] dark:border-zinc-800 dark:border-l-amber-500 dark:bg-zinc-900">
       <button
         type="button"
-        onClick={() => setOpen(false)}
-        aria-label={tCommon("dismiss")}
-        className="absolute right-2.5 top-2.5 rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+        onClick={onDismiss}
+        aria-label={c("dismiss")}
+        className="absolute right-3 top-3 rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="h-4 w-4" />
       </button>
 
-      <div className="flex gap-3.5 pr-6">
-        <div className="relative shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-[0_2px_8px_-2px_rgba(245,158,11,0.5)]">
-            <Bell className="h-4 w-4" />
-          </div>
-          <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+      {/* Header */}
+      <div className="flex items-center gap-2 pr-7">
+        <span className="relative flex h-2.5 w-2.5 shrink-0">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+        </span>
+        <Bell className="h-4 w-4 shrink-0 text-amber-500" />
+        <h3 className="flex-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          {c("title")}
+        </h3>
+        <span className="rounded bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-600 ring-1 ring-amber-500/20 dark:bg-amber-900/30 dark:text-amber-300">
+          {c("needs_attention")}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
+          <Sparkles className="h-2.5 w-2.5" />
+          AI
+        </span>
+      </div>
+
+      {/* Summary */}
+      <p className="text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+        {anomaly.summary}
+      </p>
+
+      {/* Comparison bars */}
+      <div className="flex items-center gap-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+        <div className="flex flex-1 flex-col gap-2.5">
+          <BarRow
+            color="red"
+            label={c("this_week")}
+            amount={formatCurrency(anomaly.thisWeek, lang)}
+            pct={thisWeekPct}
+          />
+          <BarRow
+            color="gray"
+            label={c("typical")}
+            amount={formatCurrency(anomaly.typical, lang)}
+            pct={typicalPct}
+          />
+        </div>
+        <div className="flex min-w-[72px] flex-col items-center gap-0.5 text-center">
+          <span className="font-mono text-2xl font-bold leading-none text-rose-500">
+            {pctLabel}
+          </span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-400">
+            {anomaly.categoryLabel}
           </span>
         </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              {t("anomalyTitle")}
-            </h3>
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-              <Sparkles className="h-2.5 w-2.5" />
-              AI
-            </span>
-          </div>
-          <p className="max-w-[720px] text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">
-            {text}
-          </p>
-          <Link
-            href="/chat"
-            className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-amber-700 transition-colors hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
-          >
-            {t("askAdvisor")}
-            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
       </div>
+
+      {/* Triggered transactions */}
+      {triggered.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+            {c("triggered").replace("{n}", String(triggered.length))}
+          </p>
+          {triggered.map((tx, i) => (
+            <div
+              key={tx.id || i}
+              className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-[13px] dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              <Sparkles className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                {tx.description}
+              </span>
+              {tx.isNew && (
+                <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
+                  {c("new_badge")}
+                </span>
+              )}
+              <span className="shrink-0 font-mono text-[13px] font-medium text-rose-500">
+                {formatSignedCurrency(-Math.abs(tx.amount), lang)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onReviewTransactions}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-85 dark:bg-zinc-100 dark:text-zinc-900"
+        >
+          <ListFilter className="h-3.5 w-3.5" />
+          {c("review")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onAskAdvisor(askPrefill)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-4 py-2 text-[13px] font-medium text-zinc-700 transition-colors hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-200 dark:hover:border-zinc-500"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {c("ask_advisor")}
+        </button>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="rounded-lg px-3 py-2 text-[13px] text-zinc-400 transition-colors hover:text-zinc-700 dark:hover:text-zinc-200"
+        >
+          {c("dismiss")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BarRow({
+  color,
+  label,
+  amount,
+  pct,
+}: {
+  color: "red" | "gray";
+  label: string;
+  amount: string;
+  pct: number;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-[13px]">
+      <span
+        className={`h-2 w-2 shrink-0 rounded-full ${color === "red" ? "bg-rose-500" : "bg-zinc-400"}`}
+      />
+      <span className="min-w-[72px] text-zinc-500 dark:text-zinc-400">{label}</span>
+      <span className="min-w-[88px] text-right font-mono text-xs text-zinc-900 dark:text-zinc-100">
+        {amount}
+      </span>
+      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+        <span
+          className={`block h-full rounded-full transition-[width] duration-700 ${color === "red" ? "bg-rose-500" : "bg-zinc-400"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </span>
     </div>
   );
 }
