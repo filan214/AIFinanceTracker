@@ -325,5 +325,77 @@ export function buildChatTools(
         };
       },
     }),
+
+    compareMonths: tool({
+      description:
+        "Compare spending between two specific months side by side, including a per-category breakdown and percentage changes. Use this (instead of calling getCategoryBreakdown twice) whenever the user asks to compare two months, e.g. 'compare April and May'. It renders a visual comparison chart.",
+      inputSchema: z.object({
+        monthA: z
+          .string()
+          .optional()
+          .describe(
+            "Earlier month in YYYY-MM format. Defaults to the month before monthB."
+          ),
+        monthB: z
+          .string()
+          .optional()
+          .describe("Later month in YYYY-MM format. Defaults to the current month."),
+      }),
+      execute: async ({ monthA, monthB }) => {
+        const b = monthB || currentMonth();
+        const [by, bm] = b.split("-").map(Number);
+        const a = monthA || ymd(by, bm - 2, 1).slice(0, 7);
+
+        async function expenseTotals(key: string) {
+          const { from, to } = monthRange(key);
+          const { data, error } = await supabase
+            .from("transactions")
+            .select("amount, category_key")
+            .eq("user_id", userId)
+            .eq("type", "expense")
+            .gte("date", from)
+            .lte("date", to);
+          if (error) return { total: 0, byCategory: {} as Record<string, number> };
+          const byCategory: Record<string, number> = {};
+          let total = 0;
+          for (const t of data ?? []) {
+            const k = t.category_key || "uncategorized";
+            const amt = Number(t.amount);
+            byCategory[k] = (byCategory[k] ?? 0) + amt;
+            total += amt;
+          }
+          return { total, byCategory };
+        }
+
+        const [ra, rb] = await Promise.all([expenseTotals(a), expenseTotals(b)]);
+        const pct = (curr: number, prev: number) =>
+          prev > 0 ? +(((curr - prev) / prev) * 100).toFixed(1) : curr > 0 ? null : 0;
+
+        const keys = Array.from(
+          new Set([...Object.keys(ra.byCategory), ...Object.keys(rb.byCategory)])
+        );
+        const categories = keys
+          .map((category_key) => {
+            const totalA = ra.byCategory[category_key] ?? 0;
+            const totalB = rb.byCategory[category_key] ?? 0;
+            return {
+              category_key,
+              totalA,
+              totalB,
+              change: totalB - totalA,
+              changePercent: pct(totalB, totalA),
+            };
+          })
+          .sort((x, y) => Math.max(y.totalA, y.totalB) - Math.max(x.totalA, x.totalB));
+
+        return {
+          monthA: { month: a, total: ra.total },
+          monthB: { month: b, total: rb.total },
+          totalChange: rb.total - ra.total,
+          totalChangePercent: pct(rb.total, ra.total),
+          categories,
+        };
+      },
+    }),
   };
 }

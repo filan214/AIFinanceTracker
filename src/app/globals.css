@@ -96,3 +96,27 @@ body {
     border-radius: 6px;
   }
 }
+
+/* Print: isolate the report card so "Download PDF" (window.print) outputs only it. */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #report-print-area,
+  #report-print-area * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  #report-print-area {
+    position: absolute;
+    inset: 0 0 auto 0;
+    width: 100%;
+  }
+  #report-print-area article {
+    box-shadow: none !important;
+  }
+  @page {
+    margin: 1.2cm;
+  }
+}

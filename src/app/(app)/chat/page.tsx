@@ -11,6 +11,10 @@ import {
   CategoryBreakdownChart,
   type CategoryBreakdownItem,
 } from "@/components/chat/category-breakdown-chart";
+import {
+  MonthComparisonChart,
+  type MonthComparisonData,
+} from "@/components/chat/month-comparison-chart";
 import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
@@ -34,6 +38,7 @@ const TOOL_LABEL_KEYS: Record<string, string> = {
   getSpendingTrend: "toolGetSpendingTrend",
   getTopExpenses: "toolGetTopExpenses",
   getBalance: "toolGetBalance",
+  compareMonths: "toolCompareMonths",
 };
 
 export default function ChatPage() {
@@ -262,17 +267,30 @@ export default function ChatPage() {
                               total?: number;
                             })
                           : null;
+                      const comparison =
+                        name === "compareMonths" &&
+                        part.state === "output-available"
+                          ? (part.output as MonthComparisonData)
+                          : null;
                       return (
                         <Fragment key={i}>
-                          <ToolIndicator
-                            label={labelKey ? t(labelKey) : name}
-                            running={isRunning}
-                          />
+                          {/* The comparison chart is self-titled, so suppress
+                              the redundant "Used month comparison" status pill
+                              once its output is in. */}
+                          {!comparison && (
+                            <ToolIndicator
+                              label={labelKey ? t(labelKey) : name}
+                              running={isRunning}
+                            />
+                          )}
                           {breakdown?.breakdown?.length ? (
                             <CategoryBreakdownChart
                               breakdown={breakdown.breakdown}
                               total={breakdown.total ?? 0}
                             />
+                          ) : null}
+                          {comparison ? (
+                            <MonthComparisonChart data={comparison} />
                           ) : null}
                         </Fragment>
                       );

@@ -12,6 +12,20 @@ export function formatCurrency(amount: number, locale: Locale = "id"): string {
   return `Rp ${formatted}`;
 }
 
+// Compact currency for tight chart labels / stat rows, e.g. "Rp 2,3 jt" / "Rp 2.3M".
+// Non-breaking spaces keep the whole token on one line so it never stacks
+// ("Rp" above "780 rb") inside narrow stat columns.
+export function formatCompactCurrency(
+  amount: number,
+  locale: Locale = "id"
+): string {
+  const formatted = new Intl.NumberFormat(LOCALE_TAG[locale], {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(Math.abs(amount));
+  return `Rp\u00a0${formatted}`;
+}
+
 export function formatSignedCurrency(
   amount: number,
   locale: Locale = "id"

@@ -1,4 +1,5 @@
 import type { CategoryKey, TransactionType } from "./mock-data";
+import type { AIReportContent, ReportData } from "@/types/report";
 import { clearAnomalyCache } from "./anomaly-cache";
 
 export type ApiTransaction = {
@@ -81,29 +82,42 @@ export async function fetchAnomaly(
   return json.anomaly ?? null;
 }
 
-export async function fetchReports(): Promise<
-  {
-    id: string;
-    content: string;
-    language: string;
-    month: string;
-    created_at: string;
-  }[]
-> {
-  const res = await fetch("/api/ai/report");
-  if (!res.ok) throw new Error("Failed to fetch reports");
+// DB-computed report numbers (metrics, breakdown, trend, movers, highlights).
+export async function fetchReportData(month: string): Promise<ReportData> {
+  const res = await fetch(`/api/reports/data?month=${month}`);
+  if (!res.ok) throw new Error("Failed to fetch report data");
   const json = await res.json();
   return json.data;
 }
 
-export async function generateReport(
+// Cached AI content (narrative + recommendations) for a month, or null if none.
+export async function fetchCachedReport(
+  month: string,
+  language: string
+): Promise<AIReportContent | null> {
+  const res = await fetch(`/api/ai/report?month=${month}`);
+  if (!res.ok) return null;
+  const json = await res.json();
+  const rows = (json.data ?? []) as { language: string; content: string }[];
+  const row = rows.find((r) => r.language === language);
+  if (!row) return null;
+  try {
+    return JSON.parse(row.content) as AIReportContent;
+  } catch {
+    return null;
+  }
+}
+
+// Generate (and cache) the AI content for a month. Pass regenerate to overwrite.
+export async function generateAIReport(
+  month: string,
   language: string,
-  month: string
-): Promise<{ content: string; month: string }> {
+  regenerate = false
+): Promise<AIReportContent> {
   const res = await fetch("/api/ai/report", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ language, month }),
+    body: JSON.stringify({ language, month, regenerate }),
   });
   if (!res.ok) {
     const json = await res.json();
