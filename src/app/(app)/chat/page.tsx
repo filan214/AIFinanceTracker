@@ -241,60 +241,65 @@ export default function ChatPage() {
                     (typeof p.type === "string" && p.type.startsWith("tool-")) ||
                     p.type === "dynamic-tool"
                 );
+                // Parse each tool part once into its chart output (if any) and
+                // its metadata label, so charts render above and the labels can
+                // sit directly on top of the response bubble.
+                const tools = toolParts.map((p) => {
+                  const part = p as {
+                    type: string;
+                    toolName?: string;
+                    state?: string;
+                    output?: unknown;
+                  };
+                  const name =
+                    part.toolName ||
+                    (part.type.startsWith("tool-") ? part.type.slice(5) : "");
+                  const labelKey = TOOL_LABEL_KEYS[name];
+                  const isRunning =
+                    part.state === "input-streaming" ||
+                    part.state === "input-available";
+                  const breakdown =
+                    name === "getCategoryBreakdown" &&
+                    part.state === "output-available"
+                      ? (part.output as {
+                          breakdown?: CategoryBreakdownItem[];
+                          total?: number;
+                        })
+                      : null;
+                  const comparison =
+                    name === "compareMonths" &&
+                    part.state === "output-available"
+                      ? (part.output as MonthComparisonData)
+                      : null;
+                  return {
+                    label: labelKey ? t(labelKey) : name,
+                    isRunning,
+                    breakdown,
+                    comparison,
+                  };
+                });
                 return (
                   <div key={m.id} className="space-y-2">
-                    {toolParts.map((p, i) => {
-                      const part = p as {
-                        type: string;
-                        toolName?: string;
-                        state?: string;
-                        output?: unknown;
-                      };
-                      const name =
-                        part.toolName ||
-                        (part.type.startsWith("tool-")
-                          ? part.type.slice(5)
-                          : "");
-                      const labelKey = TOOL_LABEL_KEYS[name];
-                      const isRunning =
-                        part.state === "input-streaming" ||
-                        part.state === "input-available";
-                      const breakdown =
-                        name === "getCategoryBreakdown" &&
-                        part.state === "output-available"
-                          ? (part.output as {
-                              breakdown?: CategoryBreakdownItem[];
-                              total?: number;
-                            })
-                          : null;
-                      const comparison =
-                        name === "compareMonths" &&
-                        part.state === "output-available"
-                          ? (part.output as MonthComparisonData)
-                          : null;
-                      return (
-                        <Fragment key={i}>
-                          {/* The comparison chart is self-titled, so suppress
-                              the redundant "Used month comparison" status pill
-                              once its output is in. */}
-                          {!comparison && (
-                            <ToolIndicator
-                              label={labelKey ? t(labelKey) : name}
-                              running={isRunning}
-                            />
-                          )}
-                          {breakdown?.breakdown?.length ? (
-                            <CategoryBreakdownChart
-                              breakdown={breakdown.breakdown}
-                              total={breakdown.total ?? 0}
-                            />
-                          ) : null}
-                          {comparison ? (
-                            <MonthComparisonChart data={comparison} />
-                          ) : null}
-                        </Fragment>
-                      );
-                    })}
+                    {tools.map((tp, i) => (
+                      <Fragment key={`chart-${i}`}>
+                        {tp.breakdown?.breakdown?.length ? (
+                          <CategoryBreakdownChart
+                            breakdown={tp.breakdown.breakdown}
+                            total={tp.breakdown.total ?? 0}
+                          />
+                        ) : null}
+                        {tp.comparison ? (
+                          <MonthComparisonChart data={tp.comparison} />
+                        ) : null}
+                      </Fragment>
+                    ))}
+                    {tools.map((tp, i) => (
+                      <ToolIndicator
+                        key={`label-${i}`}
+                        label={tp.label}
+                        running={tp.isRunning}
+                      />
+                    ))}
                     {text && (
                       <ChatBubble
                         role={m.role === "user" ? "user" : "ai"}
@@ -342,12 +347,14 @@ export default function ChatPage() {
 
 function ToolIndicator({ label, running }: { label: string; running: boolean }) {
   const t = useTranslations("chat");
+  // Subtle metadata line above the response bubble — no background, just a
+  // small dot + text so it reads as a caption, not a UI component.
   return (
-    <div className="ml-9 inline-flex items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 text-[11px] text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
+    <div className="ml-9 flex items-center gap-1.5 text-[11px] text-[color:var(--ink-5)]">
       {running ? (
         <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
       ) : (
-        <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/60" />
+        <span className="inline-block h-1 w-1 rounded-full bg-current opacity-60" />
       )}
       <span>{running ? t("fetching", { label }) : t("fetched", { label })}</span>
     </div>

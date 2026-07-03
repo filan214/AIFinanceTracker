@@ -1,8 +1,21 @@
 "use client";
 
+import { Fragment } from "react";
 import { Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
+
+// Minimal inline markdown: turn **text** into <strong>. Splitting on a capture
+// group leaves bold segments at odd indices — no markdown library needed.
+function renderBold(text: string) {
+  return text.split(/\*\*(.+?)\*\*/g).map((segment, i) =>
+    i % 2 === 1 ? (
+      <strong key={i}>{segment}</strong>
+    ) : (
+      <Fragment key={i}>{segment}</Fragment>
+    )
+  );
+}
 
 export function ChatBubble({
   role,
@@ -42,7 +55,7 @@ export function ChatBubble({
                 : "rounded-xl rounded-tr-none bg-emerald-600 text-white"
           )}
         >
-          {content}
+          {isAi ? renderBold(content) : content}
         </div>
       </div>
     </div>

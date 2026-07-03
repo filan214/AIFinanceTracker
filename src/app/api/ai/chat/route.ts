@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: openrouter(DEFAULT_MODEL),
-    system: buildChatSystemPrompt(language),
+    system: buildChatSystemPrompt(language, new Date().getFullYear()),
     messages: await convertToModelMessages(body.messages),
     tools,
     stopWhen: stepCountIs(5),
