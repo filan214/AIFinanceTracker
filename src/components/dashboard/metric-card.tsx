@@ -12,6 +12,7 @@ export function MetricCard({
   amount,
   changePercent,
   emphasis = "default",
+  tone = "neutral",
   income,
   expense,
 }: {
@@ -20,12 +21,27 @@ export function MetricCard({
   amount: number;
   changePercent?: number;
   emphasis?: "default" | "primary";
+  tone?: "income" | "expense" | "neutral";
   income?: number;
   expense?: number;
 }) {
   const { locale } = useLocale();
   const t = useTranslations("dashboard");
-  const positive = (changePercent ?? 0) >= 0;
+  const up = (changePercent ?? 0) >= 0;
+  // Income rising is favourable; expense rising is not. Drives the trend colour.
+  const favourable = tone === "expense" ? !up : up;
+
+  // Each card carries its own accent so income (green) and expense (red) are
+  // distinguishable at a glance, independent of the trend direction.
+  const badgeClass =
+    tone === "income"
+      ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
+      : tone === "expense"
+        ? "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"
+        : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300";
+  const trendClass = favourable
+    ? "text-emerald-600 dark:text-emerald-400"
+    : "text-rose-500 dark:text-rose-400";
 
   if (emphasis === "primary" && income && expense) {
     const ratio = expense / income;
@@ -91,10 +107,8 @@ export function MetricCard({
         </span>
         <div
           className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-[7px] bg-zinc-100 dark:bg-zinc-800",
-            positive
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-rose-500 dark:text-rose-400"
+            "flex h-7 w-7 items-center justify-center rounded-[7px]",
+            badgeClass
           )}
         >
           <Icon className="h-3.5 w-3.5" strokeWidth={2.4} />
@@ -105,15 +119,8 @@ export function MetricCard({
       </div>
       {typeof changePercent === "number" ? (
         <div className="mt-2 flex items-center gap-1.5 text-[11px]">
-          <span
-            className={cn(
-              "font-semibold",
-              positive
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-rose-500 dark:text-rose-400"
-            )}
-          >
-            {positive ? "↑" : "↓"} {Math.abs(changePercent).toFixed(1)}%
+          <span className={cn("font-semibold", trendClass)}>
+            {up ? "↑" : "↓"} {Math.abs(changePercent).toFixed(1)}%
           </span>
           <span className="text-zinc-400">{t("vsLastMonth")}</span>
         </div>

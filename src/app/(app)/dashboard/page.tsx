@@ -281,12 +281,14 @@ export default function DashboardPage() {
           label={t("totalIncome")}
           amount={current.income}
           changePercent={incomeChange}
+          tone="income"
         />
         <MetricCard
           icon={ArrowDownRight}
           label={t("totalExpense")}
           amount={current.expense}
           changePercent={expenseChange}
+          tone="expense"
         />
         <MetricCard
           icon={Wallet}

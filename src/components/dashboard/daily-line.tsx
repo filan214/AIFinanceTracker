@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Area,
@@ -13,6 +14,23 @@ import {
 import { useLocale } from "@/i18n/locale-provider";
 import { formatCurrency } from "@/lib/format";
 
+const RANGES = [7, 30, 90] as const;
+type Range = (typeof RANGES)[number];
+
+// `data` is sorted ascending by day. Keep the last `range` calendar days,
+// anchored to the most recent day present so it also works for past months.
+function filterByRange(
+  data: { day: string; total: number }[],
+  range: Range
+): { day: string; total: number }[] {
+  if (data.length === 0) return data;
+  const last = data[data.length - 1].day;
+  const cutoff = new Date(`${last}T00:00:00Z`);
+  cutoff.setUTCDate(cutoff.getUTCDate() - (range - 1));
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  return data.filter((d) => d.day >= cutoffStr);
+}
+
 export function DailyLine({
   data,
 }: {
@@ -20,8 +38,9 @@ export function DailyLine({
 }) {
   const { locale } = useLocale();
   const t = useTranslations("dashboard");
+  const [range, setRange] = useState<Range>(30);
 
-  const chartData = data.map((d) => ({
+  const chartData = filterByRange(data, range).map((d) => ({
     label: d.day.slice(-2),
     total: d.total,
   }));
@@ -32,21 +51,24 @@ export function DailyLine({
         <div>
           <h3 className="text-[13px] font-semibold">{t("dailyTrend")}</h3>
           <p className="text-[11px] text-zinc-400">
-            {locale === "id" ? "30 hari terakhir" : "Last 30 days"}
+            {locale === "id" ? `${range} hari terakhir` : `Last ${range} days`}
           </p>
         </div>
         <div className="flex gap-1">
-          {["7D", "30D", "90D"].map((s, i) => (
+          {RANGES.map((r) => (
             <button
-              key={s}
+              key={r}
+              type="button"
+              onClick={() => setRange(r)}
+              aria-pressed={r === range}
               className={
                 "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors " +
-                (i === 1
+                (r === range
                   ? "border border-zinc-200 bg-zinc-100 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                   : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300")
               }
             >
-              {s}
+              {r}D
             </button>
           ))}
         </div>

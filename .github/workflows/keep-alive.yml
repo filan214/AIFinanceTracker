@@ -8,6 +8,13 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - name: Ping Supabase REST API
-        run: curl -f -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" "${{ secrets.SUPABASE_URL }}/rest/v1/user_profiles?select=id&limit=1"
+        run: |
+          curl -f \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/user_profiles?select=id&limit=1"

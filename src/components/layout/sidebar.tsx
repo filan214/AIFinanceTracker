@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
@@ -12,6 +13,7 @@ import {
   Search,
   ArrowRight,
   ChevronDown,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -63,14 +65,42 @@ export { LogoMark };
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
   const tSidebar = useTranslations("sidebar");
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const displayName = user?.user_metadata?.name || user?.email?.split("@")[0] || "User";
   const displayEmail = user?.email || "—";
   const initial = displayName.charAt(0).toUpperCase();
+
+  // Close the account menu on an outside click or Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDown(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  async function handleLogout() {
+    setMenuOpen(false);
+    await signOut();
+    router.push("/");
+  }
 
   return (
     <aside className="hidden h-screen w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex"
@@ -151,7 +181,10 @@ export function Sidebar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 border-t border-zinc-100 px-2 pt-3 dark:border-zinc-800">
+        <div
+          ref={menuRef}
+          className="relative flex items-center gap-2.5 border-t border-zinc-100 px-2 pt-3 dark:border-zinc-800"
+        >
           <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-emerald-500 text-xs font-semibold text-white">
             {initial}
           </div>
@@ -163,9 +196,38 @@ export function Sidebar() {
               {displayEmail}
             </p>
           </div>
-          <button className="text-zinc-400">
-            <ChevronDown className="h-3.5 w-3.5" />
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label={displayName}
+            className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+          >
+            <ChevronDown
+              className={cn(
+                "h-3.5 w-3.5 transition-transform",
+                menuOpen && "rotate-180"
+              )}
+            />
           </button>
+
+          {menuOpen && (
+            <div
+              role="menu"
+              className="animate-fade-in absolute bottom-full right-0 mb-2 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white py-1 shadow-[var(--shadow-md)] dark:border-zinc-700 dark:bg-zinc-800"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/20"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                {t("logout")}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </aside>
