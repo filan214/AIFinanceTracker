@@ -14,17 +14,6 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
-      - name: Verify secrets are present
-        run: |
-          if [ -z "$SUPABASE_URL" ]; then
-            echo "::error::SUPABASE_URL is empty. No matching repository secret found (checked SUPABASE_URL and NEXT_PUBLIC_SUPABASE_URL). Check the exact secret name under Settings > Secrets and variables > Actions, and that it is a repository secret (not an environment secret or a variable)."
-            exit 1
-          fi
-          if [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "::error::SUPABASE_ANON_KEY is empty. No matching repository secret found (checked SUPABASE_ANON_KEY and NEXT_PUBLIC_SUPABASE_ANON_KEY)."
-            exit 1
-          fi
-          echo "Both secrets resolved."
       - name: Ping Supabase REST API
         run: |
           curl -f \
