@@ -60,13 +60,16 @@ export default function TransactionsPage() {
     loadTransactions();
   }, [loadTransactions]);
 
-  // Pre-apply the category filter when arriving from a deep link
-  // (e.g. dashboard anomaly → /transactions?category=entertainment).
+  // Pre-apply filters when arriving from a deep link: the dashboard anomaly
+  // passes ?category=entertainment, the sidebar search passes ?q=coffee.
   useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get("category");
-    if (param && (CATEGORY_KEYS as string[]).includes(param)) {
-      setCategory(param as CategoryKey);
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get("category");
+    if (cat && (CATEGORY_KEYS as string[]).includes(cat)) {
+      setCategory(cat as CategoryKey);
     }
+    const q = params.get("q");
+    if (q) setQuery(q);
   }, []);
 
   const filtered = useMemo(() => {

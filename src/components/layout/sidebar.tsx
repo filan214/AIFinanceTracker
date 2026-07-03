@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
@@ -71,6 +71,7 @@ export function Sidebar() {
   const tSidebar = useTranslations("sidebar");
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
 
   const displayName = user?.user_metadata?.name || user?.email?.split("@")[0] || "User";
@@ -102,6 +103,14 @@ export function Sidebar() {
     router.push("/");
   }
 
+  // Global search jumps to the transactions list with the term pre-applied.
+  function handleSearch(e: FormEvent) {
+    e.preventDefault();
+    const q = search.trim();
+    if (!q) return;
+    router.push(`/transactions?q=${encodeURIComponent(q)}`);
+  }
+
   return (
     <aside className="hidden h-screen w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex"
       style={{ padding: "18px 14px" }}
@@ -116,13 +125,15 @@ export function Sidebar() {
         </span>
       </Link>
 
-      <div className="relative mb-4">
+      <form onSubmit={handleSearch} className="relative mb-4">
         <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
         <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder={tSidebar("searchPlaceholder")}
           className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-1.5 pl-8 pr-3 text-xs text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
         />
-      </div>
+      </form>
 
       <nav className="mb-6 flex flex-col gap-0.5">
         {NAV.map(({ href, labelKey, icon: Icon, badge }) => {
