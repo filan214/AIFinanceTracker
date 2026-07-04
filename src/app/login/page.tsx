@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -20,6 +20,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  // Only offered when a demo account is configured (env inlined at build time).
+  const demoEmail = process.env.NEXT_PUBLIC_DEMO_EMAIL;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,6 +38,26 @@ export default function LoginPage() {
     if (authError) {
       setError(authError.message);
       setLoading(false);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
+  }
+
+  async function handleDemo() {
+    setError("");
+    setDemoLoading(true);
+
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: demoEmail ?? "",
+      password: process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? "",
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setDemoLoading(false);
       return;
     }
 
@@ -149,6 +172,29 @@ export default function LoginPage() {
                 {!loading && <ArrowRight className="h-4 w-4" />}
               </Button>
             </form>
+
+            {demoEmail && (
+              <>
+                <div className="mt-6 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                    {t("or")}
+                  </span>
+                  <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+                </div>
+                <Button
+                  type="button"
+                  size="lg"
+                  variant="secondary"
+                  onClick={handleDemo}
+                  disabled={demoLoading || loading}
+                  className="mt-4 w-full"
+                >
+                  <Sparkles className="h-4 w-4 text-emerald-500" />
+                  {demoLoading ? tCommon("loading") : t("demoCta")}
+                </Button>
+              </>
+            )}
 
             <p className="mt-6 text-center text-sm text-zinc-500">
               {t("noAccount")}{" "}

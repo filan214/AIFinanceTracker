@@ -72,6 +72,8 @@
     "haveAccount": "Sudah punya akun?",
     "signUp": "Daftar",
     "signIn": "Masuk",
+    "or": "atau",
+    "demoCta": "Coba demo",
     "showPassword": "Tampilkan kata sandi",
     "hidePassword": "Sembunyikan kata sandi",
     "passwordHint": "Gunakan 8+ karakter dengan kombinasi huruf & angka",

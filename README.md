@@ -5,8 +5,17 @@
 Ask **"how much did I spend on food in June?"** and it queries your real transactions, thinks, and answers with a number *and* a chart. Spot a spending spike before you do. Switch between 🇮🇩 Bahasa Indonesia and 🇬🇧 English with one tap. Built as a full-stack showcase of **agentic AI + a real database + a polished product UI**.
 
 <p align="center">
-  <em>Next.js 15 · React 19 · TypeScript · Supabase · Vercel AI SDK · Gemini 2.5 Flash</em>
+  <a href="https://ai-finance-tracker-delta-drab.vercel.app"><img src="https://img.shields.io/badge/Live_Demo-000000?logo=vercel&logoColor=white" alt="Live Demo"></a>
+  <a href="https://github.com/filan214/AIFinanceTracker/actions/workflows/ci.yml"><img src="https://github.com/filan214/AIFinanceTracker/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white" alt="Next.js 15">
+  <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5">
+  <img src="https://img.shields.io/badge/Supabase-Postgres-3FCF8E?logo=supabase&logoColor=white" alt="Supabase">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/AI-Gemini_2.5_Flash-8E75B2?logo=googlegemini&logoColor=white" alt="Gemini 2.5 Flash">
 </p>
+
+<p align="center"><a href="https://ai-finance-tracker-delta-drab.vercel.app"><strong>🔗 Open the live demo →</strong></a></p>
 
 ---
 
@@ -244,6 +253,13 @@ Create `.env.local` in the project root:
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 OPENROUTER_API_KEY=your-openrouter-key
+
+# Optional — enables a one-click "Try the demo" button on the login page.
+# Point these at a dedicated, throwaway, email-confirmed demo account
+# (never a personal one — the password is exposed in the client bundle).
+# Leave them unset and the button simply doesn't appear.
+NEXT_PUBLIC_DEMO_EMAIL=demo@example.com
+NEXT_PUBLIC_DEMO_PASSWORD=the-demo-password
 ```
 
 ### 3. Set up the database

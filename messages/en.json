@@ -72,6 +72,8 @@
     "haveAccount": "Already have an account?",
     "signUp": "Sign up",
     "signIn": "Sign in",
+    "or": "or",
+    "demoCta": "Try the demo",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "passwordHint": "Use 8+ characters with a mix of letters & numbers",
