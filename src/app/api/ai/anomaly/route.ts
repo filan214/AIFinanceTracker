@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { askLLM } from "@/lib/llm";
+import { weekIndex } from "@/lib/anomaly";
 import type { AnomalyResult } from "@/types/anomaly";
 
 export async function POST(req: NextRequest) {
@@ -34,10 +35,7 @@ export async function POST(req: NextRequest) {
   const priorDescriptions = new Set<string>();
 
   for (const tx of txns) {
-    const d = new Date(tx.date);
-    const weekNum = Math.floor(
-      (now.getTime() - d.getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
+    const weekNum = weekIndex(now, tx.date);
     const weekKey = `week_${weekNum}`;
     if (!weeklyData[weekKey]) weeklyData[weekKey] = {};
     weeklyData[weekKey][tx.category_key] =
