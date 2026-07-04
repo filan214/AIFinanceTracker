@@ -239,8 +239,6 @@
     "deleteChat": "Delete conversation",
     "hintSend": "to send",
     "hintNewline": "new line",
-    "attachLabel": "Attach file",
-    "comingSoon": "Coming soon",
     "quickActions": "Quick prompts",
     "history": "History"
   },

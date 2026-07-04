@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Paperclip, Send, Zap } from "lucide-react";
+import { Send, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CHAT_PROMPTS } from "./suggested-prompts";
 
 // Features 8 & 9 — input bar: auto-resizing textarea, keyboard hints,
-// attachment placeholder (disabled), and a quick-action prompt dropdown.
+// and a quick-action prompt dropdown.
 export function ChatComposer({
   value,
   onChange,
@@ -59,17 +59,6 @@ export function ChatComposer({
   return (
     <div className="border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-end gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 focus-within:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-800">
-        {/* Attachment (placeholder, disabled) */}
-        <button
-          type="button"
-          disabled
-          title={`${t("attachLabel")} · ${t("comingSoon")}`}
-          aria-label={`${t("attachLabel")} · ${t("comingSoon")}`}
-          className="mb-1 shrink-0 cursor-not-allowed rounded-md p-1.5 text-zinc-300 dark:text-zinc-600"
-        >
-          <Paperclip className="h-4 w-4" />
-        </button>
-
         {/* Quick actions */}
         <div ref={quickRef} className="relative mb-1 shrink-0">
           <button
