@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, Sparkles } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LanguageToggle } from "@/components/language-toggle";
+import { DemoLoginButton } from "@/components/demo-login-button";
 import { LogoMark } from "@/components/layout/sidebar";
 import { createClient } from "@/lib/supabase/client";
 
@@ -20,8 +21,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
-  // Only offered when a demo account is configured (env inlined at build time).
+  // The "or / Try the demo" block only shows when a demo account is configured
+  // (env inlined at build time). DemoLoginButton itself handles the sign-in.
   const demoEmail = process.env.NEXT_PUBLIC_DEMO_EMAIL;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -38,26 +39,6 @@ export default function LoginPage() {
     if (authError) {
       setError(authError.message);
       setLoading(false);
-      return;
-    }
-
-    router.push("/dashboard");
-    router.refresh();
-  }
-
-  async function handleDemo() {
-    setError("");
-    setDemoLoading(true);
-
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: demoEmail ?? "",
-      password: process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? "",
-    });
-
-    if (authError) {
-      setError(authError.message);
-      setDemoLoading(false);
       return;
     }
 
@@ -182,17 +163,11 @@ export default function LoginPage() {
                   </span>
                   <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
                 </div>
-                <Button
-                  type="button"
-                  size="lg"
+                <DemoLoginButton
                   variant="secondary"
-                  onClick={handleDemo}
-                  disabled={demoLoading || loading}
+                  size="lg"
                   className="mt-4 w-full"
-                >
-                  <Sparkles className="h-4 w-4 text-emerald-500" />
-                  {demoLoading ? tCommon("loading") : t("demoCta")}
-                </Button>
+                />
               </>
             )}
 

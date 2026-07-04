@@ -13,6 +13,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Area, ComposedChart, Line, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
+import { DemoLoginButton } from "@/components/demo-login-button";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogoMark } from "@/components/layout/sidebar";
@@ -80,6 +81,7 @@ export default function LandingPage() {
                     {t("heroSecondary")}
                   </Button>
                 </Link>
+                <DemoLoginButton variant="ghost" size="lg" />
               </div>
             </div>
 
