@@ -73,7 +73,7 @@ export function TransactionModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-5 pointer-events-none">
         <div
           onClick={(e) => e.stopPropagation()}
-          className="pointer-events-auto w-full max-w-[460px] animate-modal-in rounded-2xl border border-zinc-200 bg-white shadow-[var(--shadow-lg)] dark:border-zinc-800 dark:bg-zinc-900"
+          className="pointer-events-auto max-h-[calc(100dvh-2.5rem)] w-full max-w-[460px] animate-modal-in overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-[var(--shadow-lg)] dark:border-zinc-800 dark:bg-zinc-900"
         >
           <div className="flex items-start justify-between px-6 pb-2 pt-5">
             <div>

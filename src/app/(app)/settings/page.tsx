@@ -114,9 +114,9 @@ export default function SettingsPage() {
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
       <Section title={t("profile")}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-lg font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-lg font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
               {(
                 user?.user_metadata?.name ||
                 user?.email ||
@@ -125,7 +125,7 @@ export default function SettingsPage() {
                 .charAt(0)
                 .toUpperCase()}
             </div>
-            <div>
+            <div className="min-w-0">
               {editingName ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -153,17 +153,17 @@ export default function SettingsPage() {
                   </button>
                 </div>
               ) : (
-                <p className="text-sm font-medium">
+                <p className="truncate text-sm font-medium">
                   {user?.user_metadata?.name ||
                     user?.email?.split("@")[0] ||
                     "User"}
                 </p>
               )}
-              <p className="text-xs text-zinc-500">{user?.email || "—"}</p>
+              <p className="truncate text-xs text-zinc-500">{user?.email || "—"}</p>
             </div>
           </div>
           {!editingName && (
-            <Button variant="secondary" size="sm" onClick={startEditName}>
+            <Button variant="secondary" size="sm" className="shrink-0" onClick={startEditName}>
               {t("editProfile")}
             </Button>
           )}
@@ -275,6 +275,9 @@ function Toggle({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-5 w-9 rounded-full p-0.5 transition-colors",
+        // Touch-only: an invisible 44x44 hit area centered on the small track,
+        // so the toggle is tappable without changing its visual size.
+        "before:absolute before:left-1/2 before:top-1/2 before:hidden before:h-11 before:w-11 before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] [@media(hover:none)]:before:block",
         checked ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
       )}
     >

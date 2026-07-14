@@ -272,10 +272,7 @@ export default function DashboardPage() {
         />
       )}
 
-      <div
-        className="grid gap-3.5 sm:grid-cols-3"
-        style={{ gridTemplateColumns: "1fr 1fr 1.4fr" }}
-      >
+      <div className="grid grid-cols-1 gap-3.5 sm:[grid-template-columns:1fr_1fr_1.4fr]">
         <MetricCard
           icon={ArrowUpRight}
           label={t("totalIncome")}
@@ -301,10 +298,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div
-        className="grid gap-3.5"
-        style={{ gridTemplateColumns: "1.05fr 1.4fr" }}
-      >
+      <div className="grid grid-cols-1 gap-3.5 sm:[grid-template-columns:1.05fr_1.4fr]">
         <CategoryDonut data={current.byCategory} />
         <DailyLine data={current.dailyTotals} />
       </div>

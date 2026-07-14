@@ -105,7 +105,7 @@ export function ConversationSidebar({
                         type="button"
                         onClick={() => onDelete(s.id)}
                         aria-label={t("deleteChat")}
-                        className="shrink-0 rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-200 hover:text-rose-600 group-hover:opacity-100 dark:hover:bg-zinc-700 dark:hover:text-rose-400"
+                        className="shrink-0 rounded p-1 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-200 hover:text-rose-600 group-hover:opacity-100 [@media(hover:none)]:opacity-100 dark:hover:bg-zinc-700 dark:hover:text-rose-400"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

@@ -19,8 +19,8 @@ export function ReportHeader({
   onExport: () => void;
 }) {
   return (
-    <div className="animate-slide-up flex items-center justify-between gap-4 rounded-xl bg-zinc-900 px-6 py-5 text-white dark:bg-zinc-800">
-      <div className="flex items-center gap-3">
+    <div className="animate-slide-up flex items-center justify-between gap-3 rounded-xl bg-zinc-900 px-4 py-4 text-white dark:bg-zinc-800 sm:gap-4 sm:px-6 sm:py-5">
+      <div className="flex min-w-0 items-center gap-3">
         <div className="flex items-center gap-1 print:hidden">
           <button
             onClick={onPrev}
@@ -38,8 +38,8 @@ export function ReportHeader({
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        <div>
-          <h1 className="text-[26px] font-bold leading-tight tracking-tight">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-bold leading-tight tracking-tight sm:text-[26px]">
             {monthLabel}
           </h1>
           <p className="mt-1 flex items-center gap-1.5 text-[13px] text-white/50">

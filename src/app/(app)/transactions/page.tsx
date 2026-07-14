@@ -138,7 +138,7 @@ export default function TransactionsPage() {
         }
       />
 
-      <div className="sticky top-0 z-10 flex flex-col gap-2 border-b border-zinc-200 bg-white/95 pb-3 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95 sm:flex-row sm:items-center">
+      <div className="sticky top-[52px] z-10 flex flex-col gap-2 border-b border-zinc-200 bg-white/95 pb-3 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95 sm:flex-row sm:items-center lg:top-0">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
           <input

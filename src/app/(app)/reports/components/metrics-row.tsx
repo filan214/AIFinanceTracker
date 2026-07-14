@@ -56,7 +56,7 @@ function Metric({
       </p>
       <p
         className={
-          "mt-2 font-mono text-[22px] font-semibold tabular-nums " +
+          "mt-2 font-mono text-lg font-semibold tabular-nums sm:text-[22px] " +
           (accent ? "text-emerald-600 dark:text-emerald-400" : "")
         }
       >
@@ -107,7 +107,7 @@ export function MetricsRow({ metrics }: { metrics: ReportMetrics }) {
         <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
           {t("savingsRate")}
         </p>
-        <p className="mt-2 font-mono text-[22px] font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+        <p className="mt-2 font-mono text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400 sm:text-[22px]">
           {metrics.savingsRate}%
         </p>
         <p

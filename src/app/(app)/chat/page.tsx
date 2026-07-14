@@ -156,7 +156,7 @@ export default function ChatPage() {
   if (!mounted) return <ChatSkeleton />;
 
   return (
-    <div className="flex h-[calc(100vh-9rem)] overflow-hidden lg:h-[calc(100vh-4rem)]">
+    <div className="flex h-[calc(100dvh-9rem)] overflow-hidden lg:h-[calc(100dvh-4rem)]">
       <ConversationSidebar
         className="hidden lg:flex"
         sessions={sessions}
@@ -423,7 +423,7 @@ function ChatEmpty({
 
 function ChatSkeleton() {
   return (
-    <div className="flex h-[calc(100vh-9rem)] flex-col" aria-busy="true">
+    <div className="flex h-[calc(100dvh-9rem)] flex-col" aria-busy="true">
       <div className="flex items-center gap-2 border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
         <Skeleton className="h-7 w-7 rounded-md" />
         <Skeleton className="h-4 w-40" />
