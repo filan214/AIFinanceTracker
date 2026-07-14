@@ -9,12 +9,16 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     env:
+      APP_URL: https://ai-finance-tracker-delta-drab.vercel.app
       # Accept either the bare names or the NEXT_PUBLIC_ ones the app uses,
       # so the ping works regardless of how the repo secrets were named.
       SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
-      - name: Ping Supabase REST API
+      - name: Ping app
+        run: curl -f "$APP_URL/api/health"
+
+      - name: Ping Supabase REST API directly
         run: |
           curl -f \
             -H "apikey: $SUPABASE_ANON_KEY" \
