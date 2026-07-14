@@ -39,6 +39,7 @@ function shiftMonth(key: string, delta: number): string {
 
 export default function ReportsPage() {
   const t = useTranslations("reports");
+  const tCat = useTranslations("categories");
   const { locale } = useLocale();
 
   const now = new Date();
@@ -100,6 +101,22 @@ export default function ReportsPage() {
     return `1–${lastDay} ${names[m - 1]} ${y}`;
   }
 
+  // Build and download the report as a PDF. jsPDF is lazy-loaded so it never
+  // ships in the initial bundle — only when the user actually exports.
+  async function handleExport() {
+    if (!data) return;
+    const { downloadReportPdf } = await import("@/lib/report-pdf");
+    downloadReportPdf({
+      data,
+      ai,
+      monthLabel: monthLabel(monthKey),
+      periodMeta: periodMeta(monthKey),
+      locale,
+      t: t as unknown as (key: string) => string,
+      tCat: tCat as unknown as (key: string) => string,
+    });
+  }
+
   if (loading) return <SkeletonReport />;
 
   const header = (
@@ -109,7 +126,7 @@ export default function ReportsPage() {
       onPrev={() => setMonthKey((k) => shiftMonth(k, -1))}
       onNext={() => setMonthKey((k) => shiftMonth(k, 1))}
       canNext={monthKey < currentKey}
-      onExport={() => window.print()}
+      onExport={handleExport}
     />
   );
 
