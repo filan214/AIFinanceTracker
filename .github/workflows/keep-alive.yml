@@ -1,8 +1,14 @@
 name: Keep Supabase alive
 
+# Supabase pauses free-tier projects after ~7 days of inactivity. This job pings
+# the database on a schedule to keep it awake. Hardened to fail loudly on
+# misconfiguration and to shrug off transient network blips.
+
 on:
   schedule:
-    - cron: '0 9 */5 * *'
+    # Every 3 days at 09:00 UTC — comfortably inside the ~7-day pause window,
+    # so a single missed or failed run can't let the project fall asleep.
+    - cron: '0 9 */3 * *'
   workflow_dispatch:
 
 jobs:
@@ -15,12 +21,39 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
-      - name: Ping app
-        run: curl -f "$APP_URL/api/health"
-
-      - name: Ping Supabase REST API directly
+      - name: Verify secrets are configured
+        # Turns a blank/missing secret into a clear message instead of a
+        # cryptic "curl: (6) Could not resolve host" later on.
         run: |
-          curl -f \
+          missing=0
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::error::Repo secret SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) is not set."
+            missing=1
+          fi
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Repo secret SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) is not set."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "Add them under Settings > Secrets and variables > Actions, then re-run."
+            exit 1
+          fi
+
+      - name: Ping Supabase REST API (keeps the project awake)
+        # Retries absorb transient DNS/network/5xx errors so a blip doesn't
+        # fail the run. -o /dev/null keeps row data out of the logs.
+        run: |
+          curl -fsS --retry 5 --retry-delay 15 --retry-all-errors --max-time 30 \
+            -o /dev/null -w 'Supabase ping OK: HTTP %{http_code}\n' \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             "$SUPABASE_URL/rest/v1/user_profiles?select=id&limit=1"
+
+      - name: Ping app health endpoint (best effort)
+        # The app ping is a bonus health check, not the point of this job, so a
+        # Vercel hiccup here must not fail the Supabase keep-alive above.
+        continue-on-error: true
+        run: |
+          curl -fsS --retry 5 --retry-delay 15 --retry-all-errors --max-time 30 \
+            -o /dev/null -w 'App health OK: HTTP %{http_code}\n' \
+            "$APP_URL/api/health"
