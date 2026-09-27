@@ -1,6 +1,8 @@
 import type { BudgetWithSpent } from "@/lib/budget-progress";
 import type { ExpenseCategoryKey } from "@/lib/draft";
 import type { GoalView } from "@/lib/goal-progress";
+import type { CategoryKey, TransactionType } from "@/lib/mock-data";
+import type { RecurringRule } from "@/lib/recurring-due";
 
 async function send<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -58,4 +60,39 @@ export async function addContribution(goal_id: string, input: ContributionInput)
 
 export async function deleteContribution(id: string): Promise<void> {
   await send(`/api/goals/contributions?id=${id}`, { method: "DELETE" });
+}
+
+// ---- Recurring ----
+
+export type RuleInput = {
+  description: string;
+  amount: number;
+  type: TransactionType;
+  category_key: CategoryKey;
+  day_of_month: number;
+  start_date: string;
+};
+
+export async function fetchRecurring(): Promise<RecurringRule[]> {
+  return (await send<{ data: RecurringRule[] }>("/api/recurring")).data;
+}
+
+export async function createRecurring(input: RuleInput): Promise<void> {
+  await send("/api/recurring", jsonInit("POST", input));
+}
+
+export async function updateRecurring(
+  id: string,
+  patch: Partial<RuleInput> & { active?: boolean }
+): Promise<void> {
+  await send("/api/recurring", jsonInit("PATCH", { id, ...patch }));
+}
+
+export async function deleteRecurring(id: string): Promise<void> {
+  await send(`/api/recurring?id=${id}`, { method: "DELETE" });
+}
+
+// Generate due occurrences now; returns how many transactions were added.
+export async function runRecurring(): Promise<number> {
+  return (await send<{ created: number }>("/api/recurring/run", { method: "POST" })).created;
 }
