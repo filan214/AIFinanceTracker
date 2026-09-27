@@ -9,7 +9,7 @@ DECLARE
   goal_laptop uuid;
   goal_emergency uuid;
 BEGIN
-  SELECT id INTO demo_user_id FROM auth.users WHERE email = 'ferdiputra1404@gmail.com';
+  SELECT id INTO demo_user_id FROM auth.users WHERE email = 'demouser@gmail.com'; -- the "Try the demo" account (NEXT_PUBLIC_DEMO_EMAIL)
   IF demo_user_id IS NULL THEN
     RAISE EXCEPTION 'No user found. Update the email or paste a UUID above.';
   END IF;
