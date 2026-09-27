@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/page-header";
 import { BudgetsTab } from "@/components/planning/budgets-tab";
+import { GoalsTab } from "@/components/planning/goals-tab";
 import { cn } from "@/lib/cn";
 
-const TABS = ["budgets"] as const;
+const TABS = ["budgets", "goals"] as const;
 type Tab = (typeof TABS)[number];
-const TAB_LABEL: Record<Tab, string> = { budgets: "tabBudgets" };
+const TAB_LABEL: Record<Tab, string> = { budgets: "tabBudgets", goals: "tabGoals" };
 
 export default function PlanningPage() {
   const t = useTranslations("planning");
@@ -51,6 +52,7 @@ export default function PlanningPage() {
         ))}
       </div>
       {tab === "budgets" && <BudgetsTab />}
+      {tab === "goals" && <GoalsTab />}
     </div>
   );
 }

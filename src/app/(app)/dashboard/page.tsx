@@ -22,6 +22,7 @@ import { InsightCard } from "@/components/dashboard/insight-card";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
 import { DailyLine } from "@/components/dashboard/daily-line";
 import { BudgetCard } from "@/components/dashboard/budget-card";
+import { GoalCard } from "@/components/dashboard/goal-card";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import {
   TransactionModal,
@@ -310,6 +311,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
         <BudgetCard month={monthKey} refreshKey={dataVersion} />
+        <GoalCard refreshKey={dataVersion} />
       </div>
 
       <InsightCard />

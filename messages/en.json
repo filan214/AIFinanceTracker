@@ -115,7 +115,10 @@
     "learnMore": "Learn more",
     "budgetsTitle": "Budgets",
     "budgetsEmpty": "No budgets set yet.",
-    "budgetsCta": "Set a budget"
+    "budgetsCta": "Set a budget",
+    "goalsTitle": "Savings goal",
+    "goalsEmpty": "No savings goals yet.",
+    "goalsCta": "Create a goal"
   },
   "transactions": {
     "title": "Transactions",
@@ -169,7 +172,27 @@
     "yes": "Yes",
     "no": "No",
     "saveError": "Couldn't save. Try again.",
-    "loadError": "Couldn't load data. Refresh to try again."
+    "loadError": "Couldn't load data. Refresh to try again.",
+    "tabGoals": "Goals",
+    "addGoal": "New goal",
+    "goalName": "Goal name",
+    "goalNamePlaceholder": "e.g. New laptop",
+    "goalTarget": "Target amount",
+    "goalTargetDate": "Target date (optional)",
+    "goalsEmptyTitle": "No savings goals yet",
+    "goalsEmptySub": "Create a goal and add top-ups as you save.",
+    "savedOf": "{saved} of {target}",
+    "perMonthNeeded": "Save {amount}/month for {months, plural, one {# month} other {# months}} to reach it on time",
+    "targetBy": "Target: {date}",
+    "noTargetDate": "No target date",
+    "statusDone": "Reached",
+    "statusOverdue": "Overdue",
+    "addTopUp": "Add top-up",
+    "topUpAmount": "Amount",
+    "topUpDate": "Date",
+    "recordAsExpense": "Also record as a Savings expense",
+    "history": "History",
+    "noTopUps": "No top-ups yet."
   },
   "reports": {
     "title": "Monthly reports",

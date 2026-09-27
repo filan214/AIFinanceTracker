@@ -115,7 +115,10 @@
     "learnMore": "Lihat detail",
     "budgetsTitle": "Anggaran",
     "budgetsEmpty": "Belum ada anggaran.",
-    "budgetsCta": "Atur anggaran"
+    "budgetsCta": "Atur anggaran",
+    "goalsTitle": "Target tabungan",
+    "goalsEmpty": "Belum ada target tabungan.",
+    "goalsCta": "Buat target"
   },
   "transactions": {
     "title": "Transaksi",
@@ -169,7 +172,27 @@
     "yes": "Ya",
     "no": "Tidak",
     "saveError": "Gagal menyimpan. Coba lagi.",
-    "loadError": "Gagal memuat data. Muat ulang untuk mencoba lagi."
+    "loadError": "Gagal memuat data. Muat ulang untuk mencoba lagi.",
+    "tabGoals": "Target",
+    "addGoal": "Target baru",
+    "goalName": "Nama target",
+    "goalNamePlaceholder": "mis. Laptop baru",
+    "goalTarget": "Jumlah target",
+    "goalTargetDate": "Tanggal target (opsional)",
+    "goalsEmptyTitle": "Belum ada target tabungan",
+    "goalsEmptySub": "Buat target dan tambahkan setoran saat kamu menabung.",
+    "savedOf": "{saved} dari {target}",
+    "perMonthNeeded": "Sisihkan {amount}/bulan selama {months} bulan agar tepat waktu",
+    "targetBy": "Target: {date}",
+    "noTargetDate": "Tanpa tanggal target",
+    "statusDone": "Tercapai",
+    "statusOverdue": "Lewat target",
+    "addTopUp": "Tambah setoran",
+    "topUpAmount": "Jumlah",
+    "topUpDate": "Tanggal",
+    "recordAsExpense": "Catat juga sebagai pengeluaran Tabungan",
+    "history": "Riwayat",
+    "noTopUps": "Belum ada setoran."
   },
   "reports": {
     "title": "Laporan bulanan",
