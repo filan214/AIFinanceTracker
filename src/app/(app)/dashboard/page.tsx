@@ -21,6 +21,7 @@ import { AnomalyAlert } from "@/components/dashboard/anomaly-alert";
 import { InsightCard } from "@/components/dashboard/insight-card";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
 import { DailyLine } from "@/components/dashboard/daily-line";
+import { BudgetCard } from "@/components/dashboard/budget-card";
 import { TransactionRow } from "@/components/transactions/transaction-row";
 import {
   TransactionModal,
@@ -113,6 +114,7 @@ export default function DashboardPage() {
   const [current, setCurrent] = useState<Summary>(EMPTY);
   const [previous, setPrevious] = useState<Summary>(EMPTY);
   const [recent, setRecent] = useState<ApiTransaction[]>([]);
+  const [dataVersion, setDataVersion] = useState(0);
 
   const monthKey = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
   const prevYear = monthIdx === 0 ? year - 1 : year;
@@ -129,6 +131,7 @@ export default function DashboardPage() {
       setCurrent(summarize(curRes.data));
       setPrevious(summarize(prevRes.data));
       setRecent(curRes.data.slice(0, 8));
+      setDataVersion((v) => v + 1);
     } catch {
       setCurrent(EMPTY);
       setPrevious(EMPTY);
@@ -303,6 +306,10 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-3.5 sm:[grid-template-columns:1.05fr_1.4fr]">
         <CategoryDonut data={current.byCategory} />
         <DailyLine data={current.dailyTotals} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+        <BudgetCard month={monthKey} refreshKey={dataVersion} />
       </div>
 
       <InsightCard />

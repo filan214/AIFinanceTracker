@@ -112,7 +112,10 @@
     "insightText": "Pengeluaranmu naik 18% dari bulan lalu. Lonjakan terbesar ada di kategori Hiburan (+42%). Sisa saldo masih sehat — kamu masih bisa nabung Rp 4,8 juta bulan ini kalau pola sekarang tetap.",
     "insightActionable": "Mau saran konkret untuk menurunkan pengeluaran Hiburan?",
     "askAdvisor": "Tanya Advisor",
-    "learnMore": "Lihat detail"
+    "learnMore": "Lihat detail",
+    "budgetsTitle": "Anggaran",
+    "budgetsEmpty": "Belum ada anggaran.",
+    "budgetsCta": "Atur anggaran"
   },
   "transactions": {
     "title": "Transaksi",

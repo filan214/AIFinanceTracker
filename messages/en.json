@@ -112,7 +112,10 @@
     "insightText": "You're spending 18% more than last month. The biggest jump is in Entertainment (+42%). Your balance is still healthy — you can still save Rp 4.8M this month if the current pace holds.",
     "insightActionable": "Want concrete suggestions to bring Entertainment down?",
     "askAdvisor": "Ask Advisor",
-    "learnMore": "Learn more"
+    "learnMore": "Learn more",
+    "budgetsTitle": "Budgets",
+    "budgetsEmpty": "No budgets set yet.",
+    "budgetsCta": "Set a budget"
   },
   "transactions": {
     "title": "Transactions",
