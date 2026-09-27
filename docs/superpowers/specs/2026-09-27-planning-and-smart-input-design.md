@@ -172,7 +172,7 @@ user reviews and presses Save as before. Never auto-saves.
    the LLM for JSON `{amount, type, description, date, category_key}` given the
    text + today (Asia/Jakarta). Response validated with zod; any invalid field
    falls back to the rule-based value. If the LLM call throws, returns the
-   rule-based result with `category_key` = `shopping` (expense) or `income` (income). default
+   rule-based result with `category_key` = `shopping` (expense) or `income` (income).
 
 3. Client prefills the modal from the response.
 
