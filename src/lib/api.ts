@@ -1,6 +1,7 @@
 import type { CategoryKey, TransactionType } from "./mock-data";
 import type { AIReportContent, ReportData } from "@/types/report";
 import { clearAnomalyCache } from "./anomaly-cache";
+import type { Draft } from "./draft";
 
 export type ApiTransaction = {
   id: string;
@@ -159,4 +160,16 @@ export function exportTransactionsCsv(
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// Quick-add: turn a note like "makan siang 35rb kemarin" into a draft.
+export async function parseQuickText(text: string): Promise<Draft> {
+  const res = await fetch("/api/ai/parse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) throw new Error("parse_failed");
+  const json = await res.json();
+  return json.data;
 }

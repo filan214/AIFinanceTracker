@@ -5,6 +5,7 @@ import {
   dateRangeForPeriod,
   currentMonth,
   todayParts,
+  todayYmd,
 } from "./dates";
 
 describe("ymd", () => {
@@ -99,5 +100,13 @@ describe("Jakarta-anchored 'today' helpers", () => {
       from: "2026-01-01",
       to: "2026-12-31",
     });
+  });
+});
+
+describe("todayYmd", () => {
+  it("returns the Jakarta date as YYYY-MM-DD", () => {
+    const { y, m, d } = todayParts();
+    expect(todayYmd()).toBe(ymd(y, m, d));
+    expect(todayYmd()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

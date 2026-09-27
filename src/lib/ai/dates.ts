@@ -55,3 +55,9 @@ export function currentMonth(): string {
   const { y, m } = todayParts();
   return `${y}-${String(m + 1).padStart(2, "0")}`;
 }
+
+// Jakarta "today" as YYYY-MM-DD.
+export function todayYmd(): string {
+  const { y, m, d } = todayParts();
+  return ymd(y, m, d);
+}
