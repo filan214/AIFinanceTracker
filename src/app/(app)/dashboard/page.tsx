@@ -37,6 +37,7 @@ import {
   type ApiTransaction,
 } from "@/lib/api";
 import { ANOMALY_CACHE_KEY } from "@/lib/anomaly-cache";
+import { TRANSACTIONS_CHANGED } from "@/lib/events";
 import type { CategoryKey } from "@/lib/mock-data";
 import type { AnomalyResult } from "@/types/anomaly";
 
@@ -144,6 +145,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const onChanged = () => fetchData();
+    window.addEventListener(TRANSACTIONS_CHANGED, onChanged);
+    return () => window.removeEventListener(TRANSACTIONS_CHANGED, onChanged);
   }, [fetchData]);
 
   // Fetch the structured anomaly once per day (cached in sessionStorage).

@@ -28,6 +28,7 @@ import {
   deleteTransaction as apiDeleteTransaction,
   categorizeTransaction,
 } from "@/lib/api";
+import { TRANSACTIONS_CHANGED } from "@/lib/events";
 
 const PAGE_SIZE = 10;
 
@@ -58,6 +59,12 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     loadTransactions();
+  }, [loadTransactions]);
+
+  useEffect(() => {
+    const onChanged = () => loadTransactions();
+    window.addEventListener(TRANSACTIONS_CHANGED, onChanged);
+    return () => window.removeEventListener(TRANSACTIONS_CHANGED, onChanged);
   }, [loadTransactions]);
 
   // Pre-apply filters when arriving from a deep link: the dashboard anomaly

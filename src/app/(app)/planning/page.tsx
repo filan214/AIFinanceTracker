@@ -5,11 +5,16 @@ import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/page-header";
 import { BudgetsTab } from "@/components/planning/budgets-tab";
 import { GoalsTab } from "@/components/planning/goals-tab";
+import { RecurringTab } from "@/components/planning/recurring-tab";
 import { cn } from "@/lib/cn";
 
-const TABS = ["budgets", "goals"] as const;
+const TABS = ["budgets", "goals", "recurring"] as const;
 type Tab = (typeof TABS)[number];
-const TAB_LABEL: Record<Tab, string> = { budgets: "tabBudgets", goals: "tabGoals" };
+const TAB_LABEL: Record<Tab, string> = {
+  budgets: "tabBudgets",
+  goals: "tabGoals",
+  recurring: "tabRecurring",
+};
 
 export default function PlanningPage() {
   const t = useTranslations("planning");
@@ -53,6 +58,7 @@ export default function PlanningPage() {
       </div>
       {tab === "budgets" && <BudgetsTab />}
       {tab === "goals" && <GoalsTab />}
+      {tab === "recurring" && <RecurringTab />}
     </div>
   );
 }
