@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
+  Target,
   Receipt,
   FileText,
   MessageCircle,
@@ -23,7 +24,7 @@ import { useAuth } from "@/lib/supabase/auth-context";
 
 type NavItem = {
   href: string;
-  labelKey: "dashboard" | "transactions" | "reports" | "chat" | "settings";
+  labelKey: "dashboard" | "transactions" | "planning" | "reports" | "chat" | "settings";
   icon: LucideIcon;
   badge?: string;
 };
@@ -31,6 +32,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/transactions", labelKey: "transactions", icon: Receipt },
+  { href: "/planning", labelKey: "planning", icon: Target },
   { href: "/reports", labelKey: "reports", icon: FileText },
   { href: "/chat", labelKey: "chat", icon: MessageCircle, badge: "AI" },
   { href: "/settings", labelKey: "settings", icon: Settings },

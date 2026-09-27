@@ -30,7 +30,8 @@
     "reports": "Laporan",
     "chat": "Chat Advisor",
     "settings": "Pengaturan",
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "planning": "Perencanaan"
   },
   "landing": {
     "navLogin": "Masuk",
@@ -147,6 +148,25 @@
     "scanning": "Membaca struk…",
     "scanError": "Struk tidak terbaca — isi form secara manual.",
     "tooLarge": "Gambar terlalu besar. Coba foto yang lebih kecil."
+  },
+  "planning": {
+    "title": "Perencanaan",
+    "subtitle": "Anggaran, target tabungan, dan transaksi berulang.",
+    "tabBudgets": "Anggaran",
+    "addBudget": "Tambah anggaran",
+    "budgetCategory": "Kategori",
+    "budgetLimit": "Batas bulanan",
+    "budgetsEmptyTitle": "Belum ada anggaran",
+    "budgetsEmptySub": "Atur batas bulanan per kategori dan pantau saat kamu belanja.",
+    "spentOf": "{spent} dari {limit}",
+    "remaining": "Sisa {amount}",
+    "overBy": "Lebih {amount}",
+    "daysLeft": "{count} hari lagi",
+    "confirmDelete": "Hapus?",
+    "yes": "Ya",
+    "no": "Tidak",
+    "saveError": "Gagal menyimpan. Coba lagi.",
+    "loadError": "Gagal memuat data. Muat ulang untuk mencoba lagi."
   },
   "reports": {
     "title": "Laporan bulanan",
@@ -282,7 +302,11 @@
     "deleteConfirm": "Kamu yakin?",
     "deleteYes": "Ya, hapus",
     "deleteNo": "Batal",
-    "logoutDesc": "Keluar dari akun di perangkat ini."
+    "logoutDesc": "Keluar dari akun di perangkat ini.",
+    "planningSection": "Perencanaan",
+    "planningLabel": "Anggaran, target & transaksi berulang",
+    "planningDesc": "Kelola batas bulanan, target tabungan, dan transaksi otomatis.",
+    "planningOpen": "Buka"
   },
   "sidebar": {
     "searchPlaceholder": "Cari transaksi...",

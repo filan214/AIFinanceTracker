@@ -30,7 +30,8 @@
     "reports": "Reports",
     "chat": "Chat Advisor",
     "settings": "Settings",
-    "logout": "Log out"
+    "logout": "Log out",
+    "planning": "Planning"
   },
   "landing": {
     "navLogin": "Log in",
@@ -147,6 +148,25 @@
     "scanning": "Reading receipt…",
     "scanError": "Couldn't read the receipt — fill the form manually.",
     "tooLarge": "Image is too large. Try a smaller photo."
+  },
+  "planning": {
+    "title": "Planning",
+    "subtitle": "Budgets, savings goals, and recurring transactions.",
+    "tabBudgets": "Budgets",
+    "addBudget": "Add budget",
+    "budgetCategory": "Category",
+    "budgetLimit": "Monthly limit",
+    "budgetsEmptyTitle": "No budgets yet",
+    "budgetsEmptySub": "Set a monthly limit per category and track it as you spend.",
+    "spentOf": "{spent} of {limit}",
+    "remaining": "{amount} left",
+    "overBy": "Over by {amount}",
+    "daysLeft": "{count, plural, one {# day left} other {# days left}}",
+    "confirmDelete": "Delete?",
+    "yes": "Yes",
+    "no": "No",
+    "saveError": "Couldn't save. Try again.",
+    "loadError": "Couldn't load data. Refresh to try again."
   },
   "reports": {
     "title": "Monthly reports",
@@ -282,7 +302,11 @@
     "deleteConfirm": "Are you sure?",
     "deleteYes": "Yes, delete",
     "deleteNo": "Cancel",
-    "logoutDesc": "Sign out of your account on this device."
+    "logoutDesc": "Sign out of your account on this device.",
+    "planningSection": "Planning",
+    "planningLabel": "Budgets, goals & recurring",
+    "planningDesc": "Manage monthly limits, savings goals, and automatic transactions.",
+    "planningOpen": "Open"
   },
   "sidebar": {
     "searchPlaceholder": "Search transactions...",

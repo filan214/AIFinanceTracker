@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
   const isAppPage =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/transactions") ||
+    pathname.startsWith("/planning") ||
     pathname.startsWith("/reports") ||
     pathname.startsWith("/chat") ||
     pathname.startsWith("/settings");

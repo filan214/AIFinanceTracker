@@ -12,7 +12,10 @@ import {
   Trash2,
   Check,
   X,
+  Target,
+  ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/layout/page-header";
@@ -168,6 +171,18 @@ export default function SettingsPage() {
             </Button>
           )}
         </div>
+      </Section>
+
+      <Section title={t("planningSection")} icon={Target}>
+        <Row label={t("planningLabel")} desc={t("planningDesc")}>
+          <Link
+            href="/planning"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            {t("planningOpen")}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </Row>
       </Section>
 
       <Section title={t("languageSection")} icon={Globe}>
