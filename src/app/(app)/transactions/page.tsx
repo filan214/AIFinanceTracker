@@ -94,7 +94,7 @@ export default function TransactionsPage() {
       amount: d.amount,
       type: d.type,
       description: d.description,
-      category_key: d.type === "income" ? "income" : "shopping",
+      category_key: d.type === "income" ? "income" : d.skipCategorize ? d.category_key : "shopping",
       date: d.date,
     };
     setItems((prev) => [next, ...prev]);
@@ -104,13 +104,15 @@ export default function TransactionsPage() {
       setItems((prev) =>
         prev.map((t) => (t.id === tempId ? { ...t, id: created.id } : t))
       );
-      categorizeTransaction(created.id, d.description, d.type).then((cat) => {
-        setItems((prev) =>
-          prev.map((t) =>
-            t.id === created.id ? { ...t, category_key: cat } : t
-          )
-        );
-      });
+      if (!d.skipCategorize) {
+        categorizeTransaction(created.id, d.description, d.type).then((cat) => {
+          setItems((prev) =>
+            prev.map((t) =>
+              t.id === created.id ? { ...t, category_key: cat } : t
+            )
+          );
+        });
+      }
     } catch {
       // keep optimistic local item
     }

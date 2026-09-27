@@ -136,6 +136,14 @@
     "noResults": "Belum ada transaksi",
     "noResultsSub": "Tambah transaksi pertamamu untuk memulai."
   },
+  "smartInput": {
+    "label": "Tambah cepat dengan AI",
+    "placeholder": "mis. makan siang 35rb kemarin",
+    "fill": "Isi",
+    "error": "Tidak bisa dipahami — isi form secara manual.",
+    "aiFilled": "Diisi oleh AI — cek sebelum menyimpan.",
+    "aiCategory": "Kategori AI"
+  },
   "reports": {
     "title": "Laporan bulanan",
     "subtitle": "Ringkasan AI tentang keuanganmu tiap bulan.",

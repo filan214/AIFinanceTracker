@@ -136,6 +136,14 @@
     "noResults": "No transactions yet",
     "noResultsSub": "Add your first transaction to get started."
   },
+  "smartInput": {
+    "label": "Quick add with AI",
+    "placeholder": "e.g. makan siang 35rb kemarin",
+    "fill": "Fill",
+    "error": "Couldn't understand that — fill the form manually.",
+    "aiFilled": "Filled by AI — check before saving.",
+    "aiCategory": "AI category"
+  },
   "reports": {
     "title": "Monthly reports",
     "subtitle": "AI-written summaries of your finances each month.",

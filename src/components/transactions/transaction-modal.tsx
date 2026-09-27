@@ -7,14 +7,13 @@ import { Button } from "@/components/ui/button";
 import { CATEGORY_KEYS, type CategoryKey } from "@/lib/mock-data";
 import { useLocale } from "@/i18n/locale-provider";
 import { formatCurrency } from "@/lib/format";
+import { SmartInput } from "@/components/transactions/smart-input";
+import { CategoryBadge } from "@/components/category-badge";
+import type { Draft } from "@/lib/draft";
 
-export type TransactionDraft = {
-  amount: number;
-  type: "income" | "expense";
-  description: string;
-  date: string;
-  category_key: CategoryKey;
-};
+// skipCategorize: the category already came from AI (quick-add / receipt),
+// so the page should not run the background categorizer again.
+export type TransactionDraft = Draft & { skipCategorize?: boolean };
 
 export function TransactionModal({
   open,
@@ -28,6 +27,7 @@ export function TransactionModal({
   const t = useTranslations("transactions");
   const tCommon = useTranslations("common");
   const tCat = useTranslations("categories");
+  const tSmart = useTranslations("smartInput");
   const { locale } = useLocale();
 
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -35,6 +35,7 @@ export function TransactionModal({
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [category, setCategory] = useState<CategoryKey>("shopping");
+  const [aiFilled, setAiFilled] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -43,8 +44,18 @@ export function TransactionModal({
       setDescription("");
       setDate(new Date().toISOString().slice(0, 10));
       setCategory("shopping");
+      setAiFilled(false);
     }
   }, [open]);
+
+  function applyDraft(d: Draft) {
+    setType(d.type);
+    setAmount(d.amount > 0 ? String(d.amount) : "");
+    setDescription(d.description);
+    setDate(d.date);
+    setCategory(d.category_key);
+    setAiFilled(true);
+  }
 
   if (!open) return null;
 
@@ -60,6 +71,7 @@ export function TransactionModal({
       description: description.trim(),
       date,
       category_key: type === "income" ? "income" : category,
+      skipCategorize: aiFilled,
     });
     onClose();
   }
@@ -96,6 +108,8 @@ export function TransactionModal({
           </div>
 
           <form className="space-y-3.5 px-6 py-4" onSubmit={submit}>
+            <SmartInput onDraft={applyDraft} />
+
             <div>
               <Label>{t("fieldType")}</Label>
               <div className="grid grid-cols-2 gap-2 rounded-[9px] bg-zinc-100 p-1 dark:bg-zinc-800">
@@ -156,12 +170,24 @@ export function TransactionModal({
                 }
                 className="h-10 w-full rounded-[9px] border border-zinc-200 bg-white px-3.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
-              <div className="mt-1.5 flex items-center gap-1 text-[11px] text-zinc-400">
-                <Sparkles className="h-2.5 w-2.5" />
-                {locale === "id"
-                  ? "AI akan otomatis memilih kategori dari deskripsi ini."
-                  : "AI will pick a category from this description."}
-              </div>
+              {aiFilled ? (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  {tSmart("aiFilled")}
+                  {type === "expense" && (
+                    <span className="inline-flex items-center gap-1 text-zinc-500">
+                      · {tSmart("aiCategory")}: <CategoryBadge categoryKey={category} />
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-1.5 flex items-center gap-1 text-[11px] text-zinc-400">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  {locale === "id"
+                    ? "AI akan otomatis memilih kategori dari deskripsi ini."
+                    : "AI will pick a category from this description."}
+                </div>
+              )}
             </div>
 
             <div>

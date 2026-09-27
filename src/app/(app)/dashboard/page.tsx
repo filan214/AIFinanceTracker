@@ -210,7 +210,9 @@ export default function DashboardPage() {
   async function addTransaction(d: TransactionDraft) {
     try {
       const created = await apiCreateTransaction(d);
-      categorizeTransaction(created.id, d.description, d.type).catch(() => {});
+      if (!d.skipCategorize) {
+        categorizeTransaction(created.id, d.description, d.type).catch(() => {});
+      }
       fetchData();
       // Re-run anomaly detection so an in-place add reflects in the alert
       // without a manual refresh (cache was cleared by createTransaction).
