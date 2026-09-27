@@ -146,9 +146,9 @@ Index `(goal_id, date desc)`.
 
 ### `transactions` change
 - `add column if not exists recurring_rule_id uuid references recurring_rules(id) on delete set null`
-- `create unique index if not exists uq_tx_recurring_occurrence on transactions(recurring_rule_id, date) where recurring_rule_id is not null`
+- `create unique index if not exists uq_tx_recurring_occurrence on transactions(recurring_rule_id, date)` — not partial, because PostgREST upserts cannot target a partial index; NULLs are distinct so normal transactions never conflict.
 
-The partial unique index makes materialization idempotent under races
+The unique index makes materialization idempotent under races
 (`upsert ... onConflict ignoreDuplicates`).
 
 ## 4. Features
