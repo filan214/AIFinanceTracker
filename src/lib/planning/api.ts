@@ -1,5 +1,6 @@
 import type { BudgetWithSpent } from "@/lib/budget-progress";
 import type { ExpenseCategoryKey } from "@/lib/draft";
+import type { GoalView } from "@/lib/goal-progress";
 
 async function send<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -28,4 +29,33 @@ export async function saveBudget(category_key: ExpenseCategoryKey, amount: numbe
 
 export async function deleteBudget(id: string): Promise<void> {
   await send(`/api/budgets?id=${id}`, { method: "DELETE" });
+}
+
+// ---- Goals ----
+
+export type GoalInput = { name: string; target_amount: number; target_date: string | null };
+export type ContributionInput = { amount: number; date: string; record_as_expense: boolean };
+
+export async function fetchGoals(): Promise<GoalView[]> {
+  return (await send<{ data: GoalView[] }>("/api/goals")).data;
+}
+
+export async function createGoal(input: GoalInput): Promise<void> {
+  await send("/api/goals", jsonInit("POST", input));
+}
+
+export async function updateGoal(id: string, input: GoalInput): Promise<void> {
+  await send("/api/goals", jsonInit("PATCH", { id, ...input }));
+}
+
+export async function deleteGoal(id: string): Promise<void> {
+  await send(`/api/goals?id=${id}`, { method: "DELETE" });
+}
+
+export async function addContribution(goal_id: string, input: ContributionInput): Promise<void> {
+  await send("/api/goals/contributions", jsonInit("POST", { goal_id, ...input }));
+}
+
+export async function deleteContribution(id: string): Promise<void> {
+  await send(`/api/goals/contributions?id=${id}`, { method: "DELETE" });
 }
