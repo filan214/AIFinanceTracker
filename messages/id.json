@@ -142,7 +142,11 @@
     "fill": "Isi",
     "error": "Tidak bisa dipahami — isi form secara manual.",
     "aiFilled": "Diisi oleh AI — cek sebelum menyimpan.",
-    "aiCategory": "Kategori AI"
+    "aiCategory": "Kategori AI",
+    "scan": "Pindai struk",
+    "scanning": "Membaca struk…",
+    "scanError": "Struk tidak terbaca — isi form secara manual.",
+    "tooLarge": "Gambar terlalu besar. Coba foto yang lebih kecil."
   },
   "reports": {
     "title": "Laporan bulanan",

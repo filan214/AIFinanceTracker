@@ -173,3 +173,15 @@ export async function parseQuickText(text: string): Promise<Draft> {
   const json = await res.json();
   return json.data;
 }
+
+// Receipt scan: send a downscaled JPEG data URL, get a draft back.
+export async function scanReceipt(image: string): Promise<Draft> {
+  const res = await fetch("/api/ai/receipt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image }),
+  });
+  if (!res.ok) throw new Error("receipt_unreadable");
+  const json = await res.json();
+  return json.data;
+}

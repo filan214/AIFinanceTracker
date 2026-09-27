@@ -19,3 +19,28 @@ export async function askLLM(
   });
   return text.trim();
 }
+
+// Multimodal prompt (text + one image). Uses the Chat Completions endpoint,
+// which is OpenRouter's primary API and accepts base64 images.
+export async function askLLMWithImage(
+  prompt: string,
+  imageDataUrl: string,
+  opts: { maxOutputTokens?: number } = {}
+): Promise<string> {
+  const comma = imageDataUrl.indexOf(",");
+  const mediaType = imageDataUrl.slice(5, imageDataUrl.indexOf(";")); // "data:<type>;base64,"
+  const { text } = await generateText({
+    model: openrouter.chat(DEFAULT_MODEL),
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: prompt },
+          { type: "image", image: imageDataUrl.slice(comma + 1), mediaType },
+        ],
+      },
+    ],
+    maxOutputTokens: opts.maxOutputTokens ?? 512,
+  });
+  return text.trim();
+}

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Sparkles, Loader2, Camera } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { parseQuickText } from "@/lib/api";
+import { parseQuickText, scanReceipt } from "@/lib/api";
 import type { Draft } from "@/lib/draft";
+import { resizeImageToDataUrl } from "@/lib/image-resize";
+import { MAX_RECEIPT_DATA_URL_CHARS } from "@/lib/receipt";
 
 // One-line natural-language input that fills the transaction form. Never saves.
 export function SmartInput({ onDraft }: { onDraft: (d: Draft) => void }) {
@@ -13,6 +15,31 @@ export function SmartInput({ onDraft }: { onDraft: (d: Draft) => void }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+
+  async function onPhoto(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    if (!file.type.startsWith("image/")) {
+      setError(t("scanError"));
+      return;
+    }
+    setScanning(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      if (dataUrl.length > MAX_RECEIPT_DATA_URL_CHARS) {
+        setError(t("tooLarge"));
+        return;
+      }
+      onDraft(await scanReceipt(dataUrl));
+    } catch {
+      setError(t("scanError"));
+    } finally {
+      setScanning(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   async function fill() {
     const value = text.trim();
@@ -59,9 +86,32 @@ export function SmartInput({ onDraft }: { onDraft: (d: Draft) => void }) {
         >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("fill")}
         </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          onChange={(e) => onPhoto(e.target.files?.[0])}
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="h-9"
+          onClick={() => fileRef.current?.click()}
+          disabled={scanning || busy}
+          aria-label={t("scan")}
+          title={t("scan")}
+        >
+          {scanning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+        </Button>
       </div>
       {error && (
         <p className="mt-1.5 text-[11px] text-rose-600 dark:text-rose-400">{error}</p>
+      )}
+      {scanning && (
+        <p className="mt-1.5 text-[11px] text-zinc-500">{t("scanning")}</p>
       )}
     </div>
   );

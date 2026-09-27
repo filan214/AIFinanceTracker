@@ -142,7 +142,11 @@
     "fill": "Fill",
     "error": "Couldn't understand that — fill the form manually.",
     "aiFilled": "Filled by AI — check before saving.",
-    "aiCategory": "AI category"
+    "aiCategory": "AI category",
+    "scan": "Scan receipt",
+    "scanning": "Reading receipt…",
+    "scanError": "Couldn't read the receipt — fill the form manually.",
+    "tooLarge": "Image is too large. Try a smaller photo."
   },
   "reports": {
     "title": "Monthly reports",
