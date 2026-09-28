@@ -114,7 +114,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="hidden h-screen w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex"
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col self-start border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex"
       style={{ padding: "18px 14px" }}
     >
       <Link
