@@ -43,7 +43,7 @@ export function SmartInput({ onDraft }: { onDraft: (d: Draft, ai: boolean) => vo
 
   async function fill() {
     const value = text.trim();
-    if (!value || busy) return;
+    if (!value || busy || scanning) return;
     setBusy(true);
     setError(null);
     try {
@@ -83,7 +83,7 @@ export function SmartInput({ onDraft }: { onDraft: (d: Draft, ai: boolean) => vo
           size="sm"
           className="h-9"
           onClick={fill}
-          disabled={busy || !text.trim()}
+          disabled={busy || scanning || !text.trim()}
         >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("fill")}
         </Button>
