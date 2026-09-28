@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { askLLM } from "@/lib/llm";
-import { weekIndex } from "@/lib/anomaly";
+import { weekIndex, filterTriggeredTransactions } from "@/lib/anomaly";
 import type { AnomalyResult } from "@/types/anomaly";
 
 export async function POST(req: NextRequest) {
@@ -31,7 +31,12 @@ export async function POST(req: NextRequest) {
   }
 
   const weeklyData: Record<string, Record<string, number>> = {};
-  const thisWeekTransactions: { id: string; description: string; amount: number }[] = [];
+  const thisWeekTransactions: {
+    id: string;
+    description: string;
+    amount: number;
+    category_key: string;
+  }[] = [];
   const priorDescriptions = new Set<string>();
 
   for (const tx of txns) {
@@ -46,6 +51,7 @@ export async function POST(req: NextRequest) {
         id: tx.id,
         description: tx.description,
         amount: Number(tx.amount),
+        category_key: tx.category_key,
       });
     } else {
       priorDescriptions.add(tx.description);
@@ -61,7 +67,7 @@ Analyze the weekly spending data below and detect ONE most significant anomaly.
 Weekly spending by category (last 4 weeks, in IDR; week_0 = this week):
 ${JSON.stringify(weeklyData)}
 
-All transactions this week (id, description, amount in IDR):
+All transactions this week (id, description, amount in IDR, category_key):
 ${JSON.stringify(thisWeekTransactions)}
 
 Descriptions seen in the previous 3 weeks (used for "isNew" detection):
@@ -90,7 +96,7 @@ Rules:
 - "category" must be one of the category keys present in the data
 - "typical" = average of the 3 previous weeks for that category
 - "isNew" = true if the description is NOT in the previous-3-weeks list above
-- "triggeredTransactions" = max 3 transactions from this week most responsible for the spike; use their real id
+- "triggeredTransactions" = max 3 transactions from this week most responsible for the spike; use their real id; every one MUST have category_key equal to "category" — never include a transaction from a different category
 - "summary" must be a single sentence in ${langName}
 - "categoryLabel" must be in ${langName}`;
 
@@ -104,6 +110,13 @@ Rules:
     if (!result || result.detected !== true) {
       return NextResponse.json({ detected: false });
     }
+
+    // Defense in depth: never trust the model to have filtered these itself.
+    result.triggeredTransactions = filterTriggeredTransactions(
+      result.triggeredTransactions,
+      result.category,
+      txns
+    );
 
     await supabase.from("ai_insights").insert({
       user_id: user.id,
