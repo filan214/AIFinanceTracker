@@ -1,21 +1,23 @@
 # Handoff — Smart Finn Track
 
-_Last updated: 2026-09-28 · branch `main` · planning + smart input (22 commits since `9405889`)_
+_Last updated: 2026-09-28 · branch `main` · planning + smart input (27 commits since `9405889`)_
 
 ## Current status
 
 The **planning + smart input** plan
 (`docs/superpowers/plans/2026-09-27-planning-and-smart-input.md`, spec in
 `docs/superpowers/specs/2026-09-27-planning-and-smart-input-design.md`) is fully
-implemented and **committed to local `main`. Not pushed yet** — the user pushes;
-Vercel deploys automatically. No new environment variables are needed.
+implemented. Everything up to `ee0c1be` is **pushed and live on production**
+(new routes verified 401 logged-out / 200 as the demo user). The final-review
+fix + docs commits after it are **local, not pushed yet**. No new environment variables.
 
-**Blocker outside the code: the OpenRouter account is out of credits.** Every AI
-call now returns `402 "This request requires more credits, or fewer max_tokens …
-can only afford ~716"`. The chat advisor (asks for 2048 tokens) fails completely;
-quick-add, receipt scan, and CSV categorization fall back as designed
-(rule-based parse / localized error / `shopping`). Top up at
-https://openrouter.ai/settings/credits, then re-check the AI items below.
+**Blocker outside the code: the OpenRouter account is almost out of credits.**
+Any AI request asking for more than ~716 output tokens now returns `402 "This
+request requires more credits, or fewer max_tokens"`. The chat advisor (2048)
+fails completely and CSV categorization (1024) falls back to `shopping`.
+Quick-add and receipt scan (256 each) still get real AI answers while the
+balance lasts. Top up at https://openrouter.ai/settings/credits, then re-check
+the AI items below.
 
 Still needs a human / browser (Chrome extension was never connected this session):
 - The UI click-through of every new screen at desktop and 375px (Planning tabs,
@@ -27,7 +29,7 @@ Still needs a human / browser (Chrome extension was never connected this session
 - Reports → Export downloads a PDF (left over from the previous session).
 - Production spot-check with the demo account after the push.
 
-## Work done this session (22 commits)
+## Work done this session (27 commits)
 
 | Commit | What |
 |---|---|
@@ -53,6 +55,11 @@ Still needs a human / browser (Chrome extension was never connected this session
 | `15f02eb` | Bank CSV import endpoint with batched AI categorization |
 | `2de3bc9` | CSV import modal on the Transactions page |
 | `65db2ec` | Chat advisor reads budgets and savings goals |
+| `ee0c1be` | Handoff + progress docs |
+| `ea98a5c` | Review fix: quick-add can't save `"42.000"` as 42, an expense as `income`, or a rule-based fallback as AI |
+| `7c0eeef` | Review fix: resuming a paused recurring rule skips the paused months |
+| `f46d085` | Review fix: CSV Type column (CR/DB, K/D); `Cr/Dr` header no longer read as credit |
+| (docs) | Handoff + progress updated with the review fixes |
 
 ## SQL the user ran (Supabase SQL Editor)
 
@@ -102,12 +109,18 @@ in `src/lib/ai/tools.ts`.
   instead of a separate fetch — `/api/transactions` only filters by month.
 - **Planning client helpers live in `src/lib/planning/api.ts`**; server loaders
   (`budgets-server.ts`, `goals-server.ts`) are shared by the routes and the chat tools.
+- **Resuming a paused recurring rule skips every occurrence dated before
+  today** (sets `last_generated_month` forward) — "paused" means those months
+  are not charged.
+- **Quick-add marks a draft as AI-filled only when the AI answered** (`ai` flag
+  from `/api/ai/parse`); flipping the type afterwards clears it so the
+  background categorizer runs, and an expense can never be saved as `income`.
 - **Seed targets the Try-the-demo account**, not a personal test account.
 - **Committed to `main` directly**, user pushes. Matches the established repo workflow.
 
 ## Tests — status
 
-- **`npm test` (vitest): 115 pass, 0 fail, 15 files** (31 before this plan + 84 new).
+- **`npm test` (vitest): 122 pass, 0 fail, 15 files** (31 before this plan + 91 new).
 - **`npm run typecheck`**, **`npm run lint`**, **`npm run build`**: all clean.
 - **i18n parity** (`messages/en.json` vs `messages/id.json`): identical key sets.
 - **Live API checks** (demo login against a local dev server) passed for every
@@ -119,4 +132,4 @@ in `src/lib/ai/tools.ts`.
 ## Last command run + result
 
 `npm test && npm run typecheck && npm run lint && npm run build` → all exit 0,
-115 tests pass. `/api/ai/chat` → stream error 402 (OpenRouter credits).
+122 tests pass. `/api/ai/chat` → stream error 402 (OpenRouter credits).
