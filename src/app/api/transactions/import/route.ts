@@ -8,6 +8,7 @@ import {
   CATEGORIZE_BATCH_SIZE,
   buildCategorizePrompt,
   chunk,
+  fallbackCategories,
   parseCategoryBatch,
 } from "@/lib/csv/batch";
 
@@ -34,13 +35,12 @@ export async function POST(req: NextRequest) {
   const batches = chunk(expenses, CATEGORIZE_BATCH_SIZE);
   const results = await Promise.all(
     batches.map(async (batch): Promise<ExpenseCategoryKey[]> => {
+      const descriptions = batch.map((r) => r.description);
       try {
-        const raw = await askLLM(buildCategorizePrompt(batch.map((r) => r.description)), {
-          maxOutputTokens: 1024,
-        });
-        return parseCategoryBatch(raw, batch.length);
+        const raw = await askLLM(buildCategorizePrompt(descriptions), { maxOutputTokens: 1024 });
+        return parseCategoryBatch(raw, descriptions);
       } catch {
-        return batch.map(() => "shopping");
+        return fallbackCategories(descriptions);
       }
     })
   );

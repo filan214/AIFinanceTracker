@@ -25,8 +25,14 @@ describe("quickParse", () => {
       type: "expense",
       description: "Makan siang",
       date: "2026-09-26",
-      category_key: "shopping",
+      category_key: "food",
     });
+  });
+
+  it("guesses expense categories from keywords", () => {
+    expect(quickParse("bayar kuliah 2jt", TODAY).category_key).toBe("education");
+    expect(quickParse("bensin 50rb", TODAY).category_key).toBe("transport");
+    expect(quickParse("transfer ke budi 100rb", TODAY).category_key).toBe("shopping");
   });
 
   it("parses jt with a decimal comma and detects income", () => {

@@ -1,5 +1,6 @@
 import { addDays } from "./ymd";
 import type { Draft } from "./draft";
+import { guessCategory } from "./category-rules";
 
 const INCOME_WORDS = /\b(gaji|salary|income|bonus|freelance|refund|dapat|terima)\b/i;
 const YESTERDAY = /\b(kemarin|yesterday)\b/i;
@@ -70,6 +71,6 @@ export function quickParse(text: string, today: string): Draft {
     type,
     description,
     date,
-    category_key: type === "income" ? "income" : "shopping",
+    category_key: type === "income" ? "income" : (guessCategory(description) ?? "shopping"),
   };
 }

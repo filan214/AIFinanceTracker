@@ -1,5 +1,6 @@
 import { extractJson } from "@/lib/llm-json";
 import { EXPENSE_CATEGORY_KEYS, type ExpenseCategoryKey } from "@/lib/draft";
+import { guessCategory } from "@/lib/category-rules";
 
 // 500 rows → at most 10 AI calls, well inside the free daily quota.
 export const CATEGORIZE_BATCH_SIZE = 50;
@@ -19,12 +20,17 @@ Input:
 ${JSON.stringify(descriptions)}`;
 }
 
-export function parseCategoryBatch(raw: string, expected: number): ExpenseCategoryKey[] {
-  const fallback: ExpenseCategoryKey[] = Array(expected).fill("shopping");
+// Used when the AI is unavailable or its answer for a row is unusable.
+export function fallbackCategories(descriptions: string[]): ExpenseCategoryKey[] {
+  return descriptions.map((d) => guessCategory(d) ?? "shopping");
+}
+
+export function parseCategoryBatch(raw: string, descriptions: string[]): ExpenseCategoryKey[] {
+  const fallback = fallbackCategories(descriptions);
   const parsed = extractJson(raw);
-  if (!Array.isArray(parsed) || parsed.length !== expected) return fallback;
-  return parsed.map((v) => {
+  if (!Array.isArray(parsed) || parsed.length !== descriptions.length) return fallback;
+  return parsed.map((v, i) => {
     const k = typeof v === "string" ? v.toLowerCase().trim() : "";
-    return (EXPENSE_CATEGORY_KEYS as string[]).includes(k) ? (k as ExpenseCategoryKey) : "shopping";
+    return (EXPENSE_CATEGORY_KEYS as string[]).includes(k) ? (k as ExpenseCategoryKey) : fallback[i];
   });
 }
