@@ -163,7 +163,8 @@ export function exportTransactionsCsv(
 }
 
 // Quick-add: turn a note like "makan siang 35rb kemarin" into a draft.
-export async function parseQuickText(text: string): Promise<Draft> {
+// ai: false when the server fell back to the rule-based parse (AI down).
+export async function parseQuickText(text: string): Promise<{ draft: Draft; ai: boolean }> {
   const res = await fetch("/api/ai/parse", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -171,7 +172,7 @@ export async function parseQuickText(text: string): Promise<Draft> {
   });
   if (!res.ok) throw new Error("parse_failed");
   const json = await res.json();
-  return json.data;
+  return { draft: json.data, ai: json.ai === true };
 }
 
 // Receipt scan: send a downscaled JPEG data URL, get a draft back.

@@ -9,7 +9,7 @@ import { useLocale } from "@/i18n/locale-provider";
 import { formatCurrency } from "@/lib/format";
 import { SmartInput } from "@/components/transactions/smart-input";
 import { CategoryBadge } from "@/components/category-badge";
-import type { Draft } from "@/lib/draft";
+import { categoryForType, type Draft } from "@/lib/draft";
 
 // skipCategorize: the category already came from AI (quick-add / receipt),
 // so the page should not run the background categorizer again.
@@ -48,13 +48,13 @@ export function TransactionModal({
     }
   }, [open]);
 
-  function applyDraft(d: Draft) {
+  function applyDraft(d: Draft, ai: boolean) {
     setType(d.type);
     setAmount(d.amount > 0 ? String(d.amount) : "");
     setDescription(d.description);
     setDate(d.date);
     setCategory(d.category_key);
-    setAiFilled(true);
+    setAiFilled(ai);
   }
 
   if (!open) return null;
@@ -70,7 +70,7 @@ export function TransactionModal({
       type,
       description: description.trim(),
       date,
-      category_key: type === "income" ? "income" : category,
+      category_key: categoryForType(type, category),
       skipCategorize: aiFilled,
     });
     onClose();
@@ -117,7 +117,11 @@ export function TransactionModal({
                   <button
                     key={opt}
                     type="button"
-                    onClick={() => setType(opt)}
+                    onClick={() => {
+                      // A flipped AI draft's category no longer fits: let the categorizer run.
+                      if (opt !== type) setAiFilled(false);
+                      setType(opt);
+                    }}
                     className={
                       "rounded-[7px] px-3 py-2 text-[13px] font-medium transition-all " +
                       (type === opt

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CATEGORY_KEYS, type CategoryKey, type TransactionType } from "./mock-data";
 import { isValidYmd } from "./ymd";
+import { parseRupiahNumber } from "./quick-parse";
 
 // A transaction the user has not saved yet (quick-add, receipt scan, CSV row).
 export type Draft = {
@@ -36,7 +37,7 @@ function pick<T>(schema: z.ZodType<T>, value: unknown, fallback: T): T {
 // taken from the AI only when it validates, otherwise the base value stays.
 export function mergeAiDraft(base: Draft, ai: unknown): Draft {
   const o = (ai && typeof ai === "object" ? ai : {}) as Record<string, unknown>;
-  const amountRaw = typeof o.amount === "string" ? Number(o.amount) : o.amount;
+  const amountRaw = typeof o.amount === "string" ? parseRupiahNumber(o.amount) : o.amount;
   const type = pick(FIELD.type, o.type, base.type);
   let category_key = pick(FIELD.category_key, o.category_key, base.category_key);
   if (type === "income") category_key = "income";
@@ -50,4 +51,11 @@ export function mergeAiDraft(base: Draft, ai: unknown): Draft {
     date: pick(FIELD.date, o.date, base.date),
     category_key,
   };
+}
+
+// The category actually saved: income rows are always "income", and an expense
+// never keeps "income" (e.g. an AI income draft the user flipped to expense).
+export function categoryForType(type: TransactionType, category: CategoryKey): CategoryKey {
+  if (type === "income") return "income";
+  return category === "income" ? "shopping" : category;
 }

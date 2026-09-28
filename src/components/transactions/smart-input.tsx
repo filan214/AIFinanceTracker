@@ -10,7 +10,7 @@ import { resizeImageToDataUrl } from "@/lib/image-resize";
 import { MAX_RECEIPT_DATA_URL_CHARS } from "@/lib/receipt";
 
 // One-line natural-language input that fills the transaction form. Never saves.
-export function SmartInput({ onDraft }: { onDraft: (d: Draft) => void }) {
+export function SmartInput({ onDraft }: { onDraft: (d: Draft, ai: boolean) => void }) {
   const t = useTranslations("smartInput");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,7 @@ export function SmartInput({ onDraft }: { onDraft: (d: Draft) => void }) {
         setError(t("tooLarge"));
         return;
       }
-      onDraft(await scanReceipt(dataUrl));
+      onDraft(await scanReceipt(dataUrl), true);
     } catch {
       setError(t("scanError"));
     } finally {
@@ -47,7 +47,8 @@ export function SmartInput({ onDraft }: { onDraft: (d: Draft) => void }) {
     setBusy(true);
     setError(null);
     try {
-      onDraft(await parseQuickText(value));
+      const { draft, ai } = await parseQuickText(value);
+      onDraft(draft, ai);
       setText("");
     } catch {
       setError(t("error"));

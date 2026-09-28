@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mergeAiDraft, EXPENSE_CATEGORY_KEYS, type Draft } from "./draft";
+import { mergeAiDraft, categoryForType, EXPENSE_CATEGORY_KEYS, type Draft } from "./draft";
 
 const BASE: Draft = {
   amount: 35000,
@@ -55,6 +55,11 @@ describe("mergeAiDraft", () => {
     expect(mergeAiDraft(BASE, { amount: "42000" }).amount).toBe(42000);
   });
 
+  it("reads Indonesian-formatted string amounts as Rupiah", () => {
+    expect(mergeAiDraft(BASE, { amount: "42.000" }).amount).toBe(42000);
+    expect(mergeAiDraft(BASE, { amount: "Rp 1.250.000" }).amount).toBe(1250000);
+  });
+
   it("forces income category for income and never income for expense", () => {
     expect(mergeAiDraft(BASE, { type: "income", category_key: "food" }).category_key).toBe("income");
     expect(mergeAiDraft(BASE, { type: "expense", category_key: "income" }).category_key).toBe("shopping");
@@ -63,5 +68,13 @@ describe("mergeAiDraft", () => {
   it("returns base for non-object input", () => {
     expect(mergeAiDraft(BASE, null)).toEqual(BASE);
     expect(mergeAiDraft(BASE, "food")).toEqual(BASE);
+  });
+});
+
+describe("categoryForType", () => {
+  it("saves income rows as income and never saves an expense as income", () => {
+    expect(categoryForType("income", "food")).toBe("income");
+    expect(categoryForType("expense", "income")).toBe("shopping");
+    expect(categoryForType("expense", "food")).toBe("food");
   });
 });
