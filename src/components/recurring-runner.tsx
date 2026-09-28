@@ -4,18 +4,24 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { runRecurring } from "@/lib/planning/api";
 import { TRANSACTIONS_CHANGED } from "@/lib/events";
+import { useAuth } from "@/lib/supabase/auth-context";
 
-const SESSION_KEY = "sft:recurring-ran";
+const SESSION_KEY_PREFIX = "sft:recurring-ran:";
 
-// Once per browser session, add any recurring transactions that came due.
+// Once per browser session per user, add any recurring transactions that
+// came due. Keyed by user id so switching accounts in the same tab session
+// still gets a catch-up run for the newly signed-in user.
 export function RecurringRunner() {
   const t = useTranslations("planning");
+  const { user } = useAuth();
   const [created, setCreated] = useState(0);
 
   useEffect(() => {
+    if (!user) return;
+    const sessionKey = SESSION_KEY_PREFIX + user.id;
     try {
-      if (sessionStorage.getItem(SESSION_KEY)) return;
-      sessionStorage.setItem(SESSION_KEY, "1");
+      if (sessionStorage.getItem(sessionKey)) return;
+      sessionStorage.setItem(sessionKey, "1");
     } catch {
       // storage blocked: still run, the server side is idempotent
     }
@@ -28,7 +34,7 @@ export function RecurringRunner() {
         }
       })
       .catch((e) => console.error("recurring run failed", e));
-  }, []);
+  }, [user]);
 
   if (created === 0) return null;
   return (
