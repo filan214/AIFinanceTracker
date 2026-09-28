@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { PageHeader } from "@/components/layout/page-header";
 import { BudgetsTab } from "@/components/planning/budgets-tab";
@@ -16,20 +17,35 @@ const TAB_LABEL: Record<Tab, string> = {
   recurring: "tabRecurring",
 };
 
-export default function PlanningPage() {
-  const t = useTranslations("planning");
-  const [tab, setTab] = useState<Tab>("budgets");
+function toTab(value: string | null): Tab {
+  return value && (TABS as readonly string[]).includes(value) ? (value as Tab) : "budgets";
+}
 
-  // Read ?tab= after mount (same approach as the transactions page) so the
-  // page needs no Suspense boundary for useSearchParams.
+export default function PlanningPage() {
+  return (
+    <Suspense>
+      <PlanningPageContent />
+    </Suspense>
+  );
+}
+
+function PlanningPageContent() {
+  const t = useTranslations("planning");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [tab, setTab] = useState<Tab>(() => toTab(tabParam));
+
+  // The tab always follows ?tab= — including a same-route navigation that
+  // only changes the query (e.g. a sidebar link to bare /planning while a
+  // different tab is showing), which a mount-only effect would have missed.
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("tab");
-    if (q && (TABS as readonly string[]).includes(q)) setTab(q as Tab);
-  }, []);
+    const next = toTab(tabParam);
+    setTab((current) => (current === next ? current : next));
+  }, [tabParam]);
 
   function select(next: Tab) {
-    setTab(next);
-    window.history.replaceState(null, "", `/planning?tab=${next}`);
+    router.replace(`/planning?tab=${next}`, { scroll: false });
   }
 
   return (
