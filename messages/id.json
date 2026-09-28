@@ -235,7 +235,8 @@
     "importN": "Impor {count}",
     "importing": "Mengimpor…",
     "importError": "Impor gagal. Coba lagi.",
-    "imported": "{count} transaksi diimpor"
+    "imported": "{count} transaksi diimpor",
+    "fieldType": "Tipe (K/D)"
   },
   "reports": {
     "title": "Laporan bulanan",

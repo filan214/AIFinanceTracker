@@ -8,6 +8,7 @@ export type ColumnMapping = {
   amount: number | null;
   debit: number | null;
   credit: number | null;
+  type: number | null; // indicator column: CR/DB, K/D, kredit/debit…
 };
 
 export type ParsedAmount = { value: number; dir: "in" | "out" | null };
@@ -105,9 +106,21 @@ const KEYWORDS: Record<keyof ColumnMapping, string[]> = {
   amount: ["jumlah", "amount", "nominal", "mutasi", "nilai"],
   debit: ["debit", "debet", "db", "keluar", "withdrawal"],
   credit: ["kredit", "credit", "cr", "masuk", "deposit"],
+  type: ["tipe", "type", "jenis", "d/k", "k/d", "d/c", "c/d", "db/cr", "cr/db", "dr/cr", "cr/dr", "debit/credit", "debet/kredit"],
 };
-// Debit/credit before amount so "Debit Amount" maps to debit.
-const ORDER: (keyof ColumnMapping)[] = ["date", "debit", "credit", "amount", "description"];
+// Type first so an indicator header like "Cr/Dr" isn't taken as the credit
+// column; debit/credit before amount so "Debit Amount" maps to debit.
+const ORDER: (keyof ColumnMapping)[] = ["date", "type", "debit", "credit", "amount", "description"];
+
+const TYPE_IN = ["cr", "k", "c", "kredit", "credit", "masuk", "in", "income", "pemasukan", "+"];
+const TYPE_OUT = ["db", "dr", "d", "debit", "debet", "keluar", "out", "expense", "pengeluaran", "-"];
+
+function parseTypeValue(raw: string): ParsedAmount["dir"] {
+  const v = raw.trim().toLowerCase().replace(/\.$/, "");
+  if (TYPE_IN.includes(v)) return "in";
+  if (TYPE_OUT.includes(v)) return "out";
+  return null;
+}
 
 function headerMatches(header: string, keyword: string, exact: boolean): boolean {
   if (exact) return header === keyword;
@@ -117,7 +130,14 @@ function headerMatches(header: string, keyword: string, exact: boolean): boolean
 }
 
 export function guessMapping(headers: string[], rows: string[][]): ColumnMapping {
-  const mapping: ColumnMapping = { date: null, description: null, amount: null, debit: null, credit: null };
+  const mapping: ColumnMapping = {
+    date: null,
+    description: null,
+    amount: null,
+    debit: null,
+    credit: null,
+    type: null,
+  };
   const used = new Set<number>();
   const norm = headers.map((h) => h.toLowerCase().trim());
 
@@ -176,7 +196,11 @@ export function rowsToDrafts(rows: string[][], mapping: ColumnMapping, format: D
   const splitColumns = mapping.debit !== null || mapping.credit !== null;
 
   const parsed: (ParsedAmount | null)[] = rows.map((r) => {
-    if (!splitColumns) return parseAmount(cell(r, mapping.amount));
+    if (!splitColumns) {
+      const p = parseAmount(cell(r, mapping.amount));
+      const dir = mapping.type === null ? null : parseTypeValue(cell(r, mapping.type));
+      return p && dir ? { value: p.value, dir } : p;
+    }
     const out = parseAmount(cell(r, mapping.debit));
     if (out && out.value > 0) return { value: out.value, dir: "out" };
     const inn = parseAmount(cell(r, mapping.credit));

@@ -235,7 +235,8 @@
     "importN": "Import {count}",
     "importing": "Importing…",
     "importError": "Import failed. Try again.",
-    "imported": "{count, plural, one {# transaction imported} other {# transactions imported}}"
+    "imported": "{count, plural, one {# transaction imported} other {# transactions imported}}",
+    "fieldType": "Type (CR/DB)"
   },
   "reports": {
     "title": "Monthly reports",

@@ -61,12 +61,13 @@ describe("guessMapping", () => {
       amount: 3,
       debit: null,
       credit: null,
+      type: null,
     });
   });
   it("maps English debit/credit headers without confusing 'Description' with CR", () => {
     expect(
       guessMapping(["Transaction Date", "Transaction Description", "Debit", "Credit", "Balance"], [])
-    ).toEqual({ date: 0, description: 1, amount: null, debit: 2, credit: 3 });
+    ).toEqual({ date: 0, description: 1, amount: null, debit: 2, credit: 3, type: null });
   });
   it("falls back to value patterns for unknown headers", () => {
     expect(
@@ -77,12 +78,23 @@ describe("guessMapping", () => {
           ["02/09/2026", "Nasi padang", "45.000"],
         ]
       )
-    ).toEqual({ date: 0, description: 1, amount: 2, debit: null, credit: null });
+    ).toEqual({ date: 0, description: 1, amount: 2, debit: null, credit: null, type: null });
+  });
+  it("maps a type column instead of reading 'Cr/Dr' as credit", () => {
+    expect(guessMapping(["Date", "Description", "Amount", "Cr/Dr"], [])).toEqual({
+      date: 0,
+      description: 1,
+      amount: 2,
+      debit: null,
+      credit: null,
+      type: 3,
+    });
+    expect(guessMapping(["Tanggal", "Keterangan", "Mutasi", "Tipe"], []).type).toBe(3);
   });
 });
 
 describe("rowsToDrafts", () => {
-  const mapping = { date: 0, description: 1, amount: 2, debit: null, credit: null };
+  const mapping = { date: 0, description: 1, amount: 2, debit: null, credit: null, type: null };
 
   it("treats unsigned amounts as expenses when nothing marks direction", () => {
     const [r] = rowsToDrafts([["01/09/2026", "Kopi", "25.000"]], mapping, "dmy");
@@ -114,13 +126,27 @@ describe("rowsToDrafts", () => {
         ["01/09/2026", "Kopi", "25000", ""],
         ["25/09/2026", "Gaji", "", "8500000"],
       ],
-      { date: 0, description: 1, amount: null, debit: 2, credit: 3 },
+      { date: 0, description: 1, amount: null, debit: 2, credit: 3, type: null },
       "dmy"
     );
     expect(out.map((r) => [r.type, r.amount])).toEqual([
       ["expense", 25000],
       ["income", 8500000],
     ]);
+  });
+
+  it("reads direction from a type column", () => {
+    const out = rowsToDrafts(
+      [
+        ["01/09/2026", "Kopi", "25.000", "D"],
+        ["25/09/2026", "Gaji", "8.500.000", "K"],
+        ["26/09/2026", "Transfer", "100.000", "CR"],
+        ["27/09/2026", "Pulsa", "50.000", "DB"],
+      ],
+      { ...mapping, type: 3 },
+      "dmy"
+    );
+    expect(out.map((r) => r.type)).toEqual(["expense", "income", "income", "expense"]);
   });
 
   it("flags invalid rows", () => {
@@ -145,7 +171,7 @@ describe("findDuplicates", () => {
         ["01/09/2026", "Kopi Susu", "25000"],
         ["02/09/2026", "Kopi Susu", "25000"],
       ],
-      { date: 0, description: 1, amount: 2, debit: null, credit: null },
+      { date: 0, description: 1, amount: 2, debit: null, credit: null, type: null },
       "dmy"
     );
     const dups = findDuplicates(rows, [{ date: "2026-09-01", amount: "25000", description: "kopi susu" }]);

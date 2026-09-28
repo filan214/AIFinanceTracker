@@ -27,6 +27,7 @@ const FIELDS: { key: keyof ColumnMapping; label: string }[] = [
   { key: "amount", label: "fieldAmount" },
   { key: "debit", label: "fieldDebit" },
   { key: "credit", label: "fieldCredit" },
+  { key: "type", label: "fieldType" },
 ];
 
 const selectClass =
