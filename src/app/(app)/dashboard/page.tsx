@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   Plus,
@@ -117,6 +117,9 @@ export default function DashboardPage() {
   const [previous, setPrevious] = useState<Summary>(EMPTY);
   const [recent, setRecent] = useState<ApiTransaction[]>([]);
   const [dataVersion, setDataVersion] = useState(0);
+  // BudgetCard/GoalCard already fetch once on their own mount; only bump
+  // dataVersion on a real refresh after that, so they don't fetch twice.
+  const firstFetch = useRef(true);
 
   const monthKey = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
   const prevYear = monthIdx === 0 ? year - 1 : year;
@@ -133,7 +136,8 @@ export default function DashboardPage() {
       setCurrent(summarize(curRes.data));
       setPrevious(summarize(prevRes.data));
       setRecent(curRes.data.slice(0, 8));
-      setDataVersion((v) => v + 1);
+      if (firstFetch.current) firstFetch.current = false;
+      else setDataVersion((v) => v + 1);
     } catch {
       setCurrent(EMPTY);
       setPrevious(EMPTY);
