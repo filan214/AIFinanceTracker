@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { occurrenceDate, nextMonth, recurringDue, nextOccurrence } from "./recurring-due";
+import { occurrenceDate, nextMonth, recurringDue, nextOccurrence, resumeLastMonth } from "./recurring-due";
 
 const rule = (over: Partial<Parameters<typeof recurringDue>[0]> = {}) => ({
   day_of_month: 5,
@@ -89,5 +89,27 @@ describe("nextOccurrence", () => {
   });
   it("is null for inactive rules", () => {
     expect(nextOccurrence(rule({ active: false }), "2026-09-27")).toBeNull();
+  });
+});
+
+describe("resumeLastMonth", () => {
+  const paused = { day_of_month: 5, start_date: "2026-01-01", last_generated_month: "2026-05", active: true };
+
+  it("skips occurrences that fell while the rule was paused", () => {
+    const last = resumeLastMonth(paused, "2026-09-28");
+    expect(last).toBe("2026-09");
+    expect(recurringDue({ ...paused, last_generated_month: last }, "2026-09-28").dates).toEqual([]);
+  });
+
+  it("keeps this month's occurrence when it is still ahead", () => {
+    const rule = { ...paused, day_of_month: 30 };
+    const last = resumeLastMonth(rule, "2026-09-28");
+    expect(last).toBe("2026-08");
+    expect(recurringDue({ ...rule, last_generated_month: last }, "2026-09-30").dates).toEqual(["2026-09-30"]);
+  });
+
+  it("never moves last_generated_month backwards", () => {
+    expect(resumeLastMonth({ ...paused, day_of_month: 30, last_generated_month: "2026-09" }, "2026-09-28")).toBe("2026-09");
+    expect(resumeLastMonth({ ...paused, last_generated_month: null }, "2026-01-03")).toBe("2025-12");
   });
 });

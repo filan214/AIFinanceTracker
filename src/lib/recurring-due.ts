@@ -29,6 +29,23 @@ export function nextMonth(month: string): string {
   return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
 }
 
+function prevMonth(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
+}
+
+// last_generated_month to store when a paused rule is resumed: occurrences
+// dated before today (the paused period) are skipped, not back-filled.
+export function resumeLastMonth(
+  rule: Pick<RecurringSchedule, "day_of_month" | "last_generated_month">,
+  today: string
+): string {
+  const thisMonth = today.slice(0, 7);
+  const skipTo = occurrenceDate(thisMonth, rule.day_of_month) < today ? thisMonth : prevMonth(thisMonth);
+  const last = rule.last_generated_month;
+  return last && last > skipTo ? last : skipTo;
+}
+
 // Occurrences that are due (date ≤ today) and not generated yet.
 export function recurringDue(
   rule: RecurringSchedule,

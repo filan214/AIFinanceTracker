@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { CATEGORY_KEYS, type CategoryKey } from "@/lib/mock-data";
 import { isValidYmd } from "@/lib/ymd";
+import { todayYmd } from "@/lib/ai/dates";
+import { resumeLastMonth } from "@/lib/recurring-due";
 
 const RuleInput = z.object({
   description: z.string().trim().min(1).max(120),
@@ -66,9 +68,23 @@ export async function PATCH(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   const { id, ...fields } = fixCategory(parsed.data);
+  let update: typeof fields & { last_generated_month?: string } = fields;
+  if (fields.active === true) {
+    const { data: current } = await supabase
+      .from("recurring_rules")
+      .select("active, day_of_month, last_generated_month")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    // Resuming a paused rule must not back-fill the months it was paused.
+    if (current && !current.active) {
+      const day_of_month = fields.day_of_month ?? current.day_of_month;
+      update = { ...fields, last_generated_month: resumeLastMonth({ ...current, day_of_month }, todayYmd()) };
+    }
+  }
   const { data, error } = await supabase
     .from("recurring_rules")
-    .update(fields)
+    .update(update)
     .eq("id", id)
     .eq("user_id", user.id)
     .select()
