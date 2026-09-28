@@ -4,8 +4,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { currentMonth } from "@/lib/ai/dates";
 import { EXPENSE_CATEGORY_KEYS, type ExpenseCategoryKey } from "@/lib/draft";
 import { loadBudgetsWithSpent } from "@/lib/planning/budgets-server";
-
-const MONTH = /^\d{4}-\d{2}$/;
+import { isValidMonth } from "@/lib/ymd";
 
 const Upsert = z.object({
   category_key: z.enum(EXPENSE_CATEGORY_KEYS as [ExpenseCategoryKey, ...ExpenseCategoryKey[]]),
@@ -20,7 +19,7 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const month = req.nextUrl.searchParams.get("month") || currentMonth();
-  if (!MONTH.test(month)) return NextResponse.json({ error: "Invalid month" }, { status: 400 });
+  if (!isValidMonth(month)) return NextResponse.json({ error: "Invalid month" }, { status: 400 });
 
   try {
     const data = await loadBudgetsWithSpent(supabase, user.id, month);
@@ -60,7 +59,9 @@ export async function DELETE(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const id = req.nextUrl.searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (!id || !z.uuid().safeParse(id).success) {
+    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  }
 
   const { error } = await supabase.from("budgets").delete().eq("id", id).eq("user_id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

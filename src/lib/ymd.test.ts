@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidYmd, addDays } from "./ymd";
+import { isValidYmd, addDays, isValidMonth } from "./ymd";
 
 describe("isValidYmd", () => {
   it("accepts real dates", () => {
@@ -11,6 +11,21 @@ describe("isValidYmd", () => {
     expect(isValidYmd("2026-13-01")).toBe(false);
     expect(isValidYmd("27/09/2026")).toBe(false);
     expect(isValidYmd("")).toBe(false);
+  });
+});
+
+describe("isValidMonth", () => {
+  it("accepts 01 through 12", () => {
+    expect(isValidMonth("2026-01")).toBe(true);
+    expect(isValidMonth("2026-12")).toBe(true);
+    expect(isValidMonth("2026-09")).toBe(true);
+  });
+  it("rejects an out-of-range or malformed month", () => {
+    expect(isValidMonth("2026-13")).toBe(false);
+    expect(isValidMonth("2026-00")).toBe(false);
+    expect(isValidMonth("2026-9")).toBe(false);
+    expect(isValidMonth("09-2026")).toBe(false);
+    expect(isValidMonth("")).toBe(false);
   });
 });
 

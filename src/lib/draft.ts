@@ -18,7 +18,7 @@ export const EXPENSE_CATEGORY_KEYS = CATEGORY_KEYS.filter(
   (k): k is ExpenseCategoryKey => k !== "income"
 );
 
-const MAX_AMOUNT = 1_000_000_000_000;
+export const MAX_AMOUNT = 1_000_000_000_000;
 
 const FIELD = {
   amount: z.number().positive().max(MAX_AMOUNT),

@@ -47,4 +47,10 @@ describe("normalizeReceipt", () => {
     expect(normalizeReceipt({ total: "n/a" }, TODAY)).toBeNull();
     expect(normalizeReceipt(null, TODAY)).toBeNull();
   });
+
+  it("returns null for an implausibly large total", () => {
+    expect(normalizeReceipt({ total: 2_000_000_000_000 }, TODAY)).toBeNull();
+    expect(normalizeReceipt({ total: "2.000.000.000.000" }, TODAY)).toBeNull();
+    expect(normalizeReceipt({ total: 1_000_000_000_000 }, TODAY)?.amount).toBe(1_000_000_000_000);
+  });
 });

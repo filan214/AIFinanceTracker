@@ -1,4 +1,4 @@
-import { EXPENSE_CATEGORY_KEYS, type Draft, type ExpenseCategoryKey } from "./draft";
+import { EXPENSE_CATEGORY_KEYS, MAX_AMOUNT, type Draft, type ExpenseCategoryKey } from "./draft";
 import { parseRupiahNumber } from "./quick-parse";
 import { isValidYmd } from "./ymd";
 
@@ -21,7 +21,7 @@ export function normalizeReceipt(ai: unknown, today: string): Draft | null {
       : typeof o.total === "string"
         ? parseRupiahNumber(o.total)
         : null;
-  if (total === null || !Number.isFinite(total) || total <= 0) return null;
+  if (total === null || !Number.isFinite(total) || total <= 0 || total > MAX_AMOUNT) return null;
 
   const date =
     typeof o.date === "string" && isValidYmd(o.date) && o.date <= today ? o.date : today;

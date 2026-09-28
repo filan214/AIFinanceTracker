@@ -29,13 +29,18 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
-  const { error } = await supabase
+  const { data: contribution, error } = await supabase
     .from("goal_contributions")
-    .insert({ goal_id, user_id: user.id, amount, date });
+    .insert({ goal_id, user_id: user.id, amount, date })
+    .select("id")
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Optional mirror as a normal expense so the monthly balance stays honest.
-  // Not linked to the contribution: deleting one never deletes the other.
+  // Not linked to the contribution: deleting one never deletes the other. If
+  // this insert fails, roll the contribution back too, so a retry after a
+  // transient error can't leave a contribution with no matching expense (and
+  // can't create a duplicate contribution either).
   if (record_as_expense) {
     const { error: txErr } = await supabase.from("transactions").insert({
       user_id: user.id,
@@ -45,7 +50,10 @@ export async function POST(req: NextRequest) {
       category_key: "savings",
       date,
     });
-    if (txErr) return NextResponse.json({ error: txErr.message }, { status: 500 });
+    if (txErr) {
+      await supabase.from("goal_contributions").delete().eq("id", contribution.id);
+      return NextResponse.json({ error: txErr.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ ok: true }, { status: 201 });
@@ -59,7 +67,9 @@ export async function DELETE(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const id = req.nextUrl.searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (!id || !z.uuid().safeParse(id).success) {
+    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from("goal_contributions")

@@ -7,6 +7,10 @@ export function isValidYmd(s: string): boolean {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
 }
 
+export function isValidMonth(s: string): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(s);
+}
+
 export function addDays(ymd: string, days: number): string {
   const d = new Date(`${ymd}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);

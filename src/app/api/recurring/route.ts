@@ -88,8 +88,9 @@ export async function PATCH(req: NextRequest) {
     .eq("id", id)
     .eq("user_id", user.id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "Rule not found" }, { status: 404 });
   return NextResponse.json({ data });
 }
 
@@ -97,7 +98,9 @@ export async function DELETE(req: NextRequest) {
   const { supabase, user } = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const id = req.nextUrl.searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (!id || !z.uuid().safeParse(id).success) {
+    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  }
 
   // Generated transactions stay (FK is ON DELETE SET NULL).
   const { error } = await supabase.from("recurring_rules").delete().eq("id", id).eq("user_id", user.id);
