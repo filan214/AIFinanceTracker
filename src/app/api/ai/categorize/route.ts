@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { askLLM } from "@/lib/llm";
+import { guessCategory } from "@/lib/category-rules";
 
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabase();
@@ -38,16 +39,20 @@ Transaction description: "${description}"
 
 Reply with EXACTLY ONE word — the category key. No quotes, no punctuation, no explanation.`;
 
+  // AI down, rate-limited, or unusable reply: keyword rules, then shopping.
+  const fallback = () => guessCategory(String(description ?? "")) ?? "shopping";
+
   async function categorize(): Promise<string> {
     try {
       const raw = await askLLM(prompt, { maxOutputTokens: 16 });
       const normalized = raw.toLowerCase();
+      // No "income" here: this branch only runs for expenses.
       const match = normalized.match(
-        /\b(food|transport|entertainment|shopping|bills|health|education|savings|income)\b/
+        /\b(food|transport|entertainment|shopping|bills|health|education|savings)\b/
       );
-      return match ? match[1] : "shopping";
+      return match ? match[1] : fallback();
     } catch {
-      return "shopping";
+      return fallback();
     }
   }
 
