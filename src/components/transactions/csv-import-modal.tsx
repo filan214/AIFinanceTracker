@@ -77,10 +77,14 @@ export function CsvImportModal({
   );
   const duplicates = useMemo(() => findDuplicates(drafts, existing), [drafts, existing]);
 
-  // Invalid rows and likely duplicates start unchecked whenever parsing changes.
+  // Invalid rows and likely duplicates start unchecked whenever parsing
+  // changes (file, mapping, or date format) — but NOT just because `existing`
+  // reloaded (e.g. the recurring runner firing while this modal is open),
+  // which would otherwise silently wipe the user's manual checkbox choices.
   useEffect(() => {
     setExcluded(new Set(drafts.filter((d) => d.error || duplicates.has(d.index)).map((d) => d.index)));
-  }, [drafts, duplicates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drafts]);
 
   const selected = drafts.filter((d) => !d.error && !excluded.has(d.index));
 
@@ -218,6 +222,15 @@ export function CsvImportModal({
 
                 <div className="max-h-[45vh] overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
                   <table className="w-full text-left text-xs">
+                    <thead className="sticky top-0 bg-white dark:bg-zinc-900">
+                      <tr className="border-b border-zinc-200 text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800">
+                        <th className="w-8 px-2 py-1.5" />
+                        <th className="px-2 py-1.5 font-medium normal-case tracking-normal">{t("fieldDate")}</th>
+                        <th className="px-2 py-1.5 font-medium normal-case tracking-normal">{t("fieldDescription")}</th>
+                        <th className="px-2 py-1.5 text-right font-medium normal-case tracking-normal">{t("fieldAmount")}</th>
+                        <th className="px-2 py-1.5" />
+                      </tr>
+                    </thead>
                     <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                       {drafts.map((d) => {
                         const checked = !d.error && !excluded.has(d.index);
