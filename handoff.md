@@ -1,131 +1,122 @@
 # Handoff — Smart Finn Track
 
-_Last updated: 2026-08-11 · branch `main` · HEAD `d8fe869`_
+_Last updated: 2026-09-28 · branch `main` · planning + smart input (22 commits since `9405889`)_
 
 ## Current status
 
-No feature is mid-flight. Everything from this session is **committed, pushed, and
-verified live on production** (https://ai-finance-tracker-delta-drab.vercel.app).
-The session was a cleanup/polish pass on the deployed portfolio app, not a single
-long feature.
+The **planning + smart input** plan
+(`docs/superpowers/plans/2026-09-27-planning-and-smart-input.md`, spec in
+`docs/superpowers/specs/2026-09-27-planning-and-smart-input-design.md`) is fully
+implemented and **committed to local `main`. Not pushed yet** — the user pushes;
+Vercel deploys automatically. No new environment variables are needed.
 
-The **only thing left to eyeball manually** (couldn't be machine-verified here):
-- Click **Try the demo → Reports → Export** in a browser and confirm a PDF
-  actually downloads. The route is deployed; the client-side download can't be
-  exercised via curl.
-- Re-run the **Keep Supabase alive** GitHub Action (Actions → Run workflow) to
-  confirm the hardened version is green. GitHub Actions can't be triggered from
-  the CLI session.
+**Blocker outside the code: the OpenRouter account is out of credits.** Every AI
+call now returns `402 "This request requires more credits, or fewer max_tokens …
+can only afford ~716"`. The chat advisor (asks for 2048 tokens) fails completely;
+quick-add, receipt scan, and CSV categorization fall back as designed
+(rule-based parse / localized error / `shopping`). Top up at
+https://openrouter.ai/settings/credits, then re-check the AI items below.
 
-## Work done this session (5 commits)
+Still needs a human / browser (Chrome extension was never connected this session):
+- The UI click-through of every new screen at desktop and 375px (Planning tabs,
+  dashboard cards, quick-add box, receipt camera button, CSV import modal,
+  Settings → Planning link, EN/ID strings). All APIs behind them were verified live.
+- Chat: "Am I over budget this month?" → "budget data" chip; "Kapan target laptop
+  saya tercapai?" → "target tabungan" chip (needs credits).
+- Receipt camera on a real phone.
+- Reports → Export downloads a PDF (left over from the previous session).
+- Production spot-check with the demo account after the push.
+
+## Work done this session (22 commits)
 
 | Commit | What |
 |---|---|
-| `5dd6dc0` | Add `/api/health` route (keep-alive workflow was 404ing on it) |
-| `069f2c7` | Mobile responsive pass across all app pages |
-| `9e0b86e` | Add favicon (`/favicon.ico` + `/favicon.png` were 404ing) |
-| `9631628` | Report PDF export (replaces `window.print()` with a real download) |
-| `d8fe869` | Harden the keep-alive workflow |
+| `293e9b2` | Implementation plan |
+| `43c0eaf` | Rule-based quick-add parser + draft helpers |
+| `19c7240` | AI quick-add parse endpoint with rule-based fallback |
+| `dbbbed1` | Quick-add from natural-language text in the transaction modal |
+| `20cef6b` | Scan a receipt photo into a draft transaction |
+| `de9fbd0` | Planning schema + demo seed SQL |
+| `daa7887` | Budget progress calculations |
+| `ef30f88` | Budgets API |
+| `c40f3c4` | Seed planning data into the Try-the-demo account |
+| `91198d8` | Planning page with category budgets |
+| `d895de9` | Budget progress card on the dashboard |
+| `2e772c1` | Savings goal progress calculations |
+| `8b39945` | Savings goals API |
+| `6f2e318` | Savings goals tab + dashboard goal card |
+| `c959750` | Recurring schedule calculations |
+| `d8091fd` | Recurring rules API + catch-up endpoint |
+| `56780b8` | Recurring tab + catch-up on app open |
+| `51cf81b` | CSV parser for bank imports |
+| `4b8b063` | CSV column mapping, amount/date parsing, duplicate detection |
+| `15f02eb` | Bank CSV import endpoint with batched AI categorization |
+| `2de3bc9` | CSV import modal on the Transactions page |
+| `65db2ec` | Chat advisor reads budgets and savings goals |
+
+## SQL the user ran (Supabase SQL Editor)
+
+- `supabase/planning.sql` — `budgets`, `savings_goals`, `goal_contributions`,
+  `recurring_rules` (all with RLS `auth.uid() = user_id`), `transactions.recurring_rule_id`
+  (FK `on delete set null`) + unique index `(recurring_rule_id, date)`.
+- `supabase/Seed Planning for Demo User.sql` — seeds the **Try-the-demo** account
+  (`NEXT_PUBLIC_DEMO_EMAIL`): 4 budgets, 2 goals, 6 contributions, 3 recurring rules.
+  Verified: budgets 4, savings_goals 2, goal_contributions 6, recurring_rules 3.
 
 ## Files changed this session
 
-**`5dd6dc0` — health route**
-- `src/app/api/health/route.ts` (new) — `force-dynamic` GET returning `{ ok: true }`
-
-**`069f2c7` — mobile responsive (12 files)**
-- `src/app/(app)/layout.tsx` — removed an inline `style` that overrode all responsive `<main>` padding
-- `src/app/(app)/dashboard/page.tsx` — removed inline `gridTemplateColumns` on the metric + chart grids
-- `src/components/layout/page-header.tsx` — actions row `flex-wrap`
-- `src/app/(app)/transactions/page.tsx` — sticky filter bar offset below mobile header
-- `src/components/transactions/transaction-row.tsx` — edit/delete visible on touch
-- `src/components/transactions/transaction-modal.tsx` — `max-h` + internal scroll
-- `src/app/(app)/chat/page.tsx` — `100vh` → `100dvh`
-- `src/components/chat/conversation-sidebar.tsx` — delete visible on touch
-- `src/app/(app)/reports/components/report-header.tsx` — smaller heading/padding on mobile + truncation
-- `src/app/(app)/reports/components/metrics-row.tsx` — `text-lg sm:text-[22px]`
-- `src/app/(app)/settings/page.tsx` — profile row truncation; toggle touch hit area
-- `src/components/ui/button.tsx` — `[@media(hover:none)]:min-h-11` (44px touch tap target)
-
-**`9e0b86e` — favicon (2 files)**
-- `src/app/favicon.ico` (new) — 16+32 multi-size ICO, generated from `LogoMark`
-- `public/favicon.png` (new) — 64px PNG for the literal `/favicon.png` path
-
-**`9631628` — PDF export (5 files)**
-- `src/lib/report-pdf.ts` (new) — `buildReportDoc` (pure) + `downloadReportPdf` (save)
-- `src/lib/report-pdf.test.ts` (new) — 3 generation tests
-- `src/app/(app)/reports/page.tsx` — `onExport` now lazy-imports the generator (was `window.print()`); added `tCat`
-- `package.json` / `package-lock.json` — added `jspdf` (4.2.1) + `jspdf-autotable` (5.0.8)
-
-**`d8fe869` — keep-alive**
-- `.github/workflows/keep-alive.yml`
+See the plan's **File Map** for the full list. New pure modules (all with tests):
+`src/lib/{ymd,draft,quick-parse,llm-json,receipt,budget-progress,goal-progress,recurring-due}.ts`,
+`src/lib/csv/{parse,map,batch}.ts`. New routes: `/api/ai/parse`, `/api/ai/receipt`,
+`/api/budgets`, `/api/goals`, `/api/goals/contributions`, `/api/recurring`,
+`/api/recurring/run`, `/api/transactions/import`. New page: `/planning`
+(Budgets / Goals / Recurring tabs, `?tab=`). Chat tools `getBudgets` / `getGoals`
+in `src/lib/ai/tools.ts`.
 
 ## Why these technical decisions (so they don't need re-explaining)
 
-- **Mobile fixes gated behind `sm:`/`lg:` or `[@media(hover:none)]`.** The
-  requirement was "don't change desktop." Everything either applies only below a
-  breakpoint, only on touch devices, or is inert when there's room (`min-w-0`,
-  `truncate`, `flex-wrap`). Desktop stays pixel-identical.
-- **The root cause of most mobile bugs was inline `style` overriding Tailwind.**
-  `<main>` had `style={{padding}}` killing `pb-24`; the dashboard grids had inline
-  `gridTemplateColumns` forcing multi-column at every width. Fix = delete the
-  inline style and express it as responsive classes
-  (`sm:[grid-template-columns:1fr_1fr_1.4fr]`).
-- **`[@media(hover:none)]` for touch reveal + tap targets** instead of a width
-  breakpoint: hover-reveal (edit/delete, conversation delete) is a *desktop*
-  affordance; touch devices have no hover, so those actions were unreachable. The
-  media query targets actual touch capability, not screen width, so desktop hover
-  behavior is untouched.
-- **`100vh` → `100dvh`** on the chat container: mobile browsers count the URL-bar
-  area in `100vh`, pushing the composer off-screen. `dvh` == `vh` on desktop.
-- **Favicon: `app/favicon.ico` (Next convention) + `public/favicon.png`.** The app
-  declared no icon at all, so browsers/crawlers probed both default paths and
-  404'd. `app/favicon.ico` makes Next serve it *and* inject `<link rel="icon">`,
-  which also stops the `/favicon.png` probing. Generated from the app's own
-  `LogoMark` via **sharp** — note the Windows `convert` on PATH is the NTFS tool,
-  NOT ImageMagick. `png-to-ico` wasn't installed, so the ICO container is
-  hand-assembled from 16+32 PNGs.
-- **PDF: data-driven jsPDF, not an html2canvas snapshot** (user chose this via a
-  prompt). Reasons: selectable/searchable text, crisp vector, proper multi-page
-  A4, theme-independent, and no capture glitches (custom SVG charts + dark mode
-  break html2canvas). Stack is Tailwind v3 (hex/rgb, no `oklch`), so html2canvas
-  *would* have worked — the choice was about output quality, not feasibility.
-- **jsPDF is lazy-loaded** (`await import("@/lib/report-pdf")`) so it stays out of
-  the initial bundle — `/reports` is 8.5 kB, jsPDF only fetched on Export click.
-- **`buildReportDoc` (pure, returns the doc) is split from `downloadReportPdf`
-  (calls `.save()`)** so generation is unit-testable without a DOM.
-- **PDF text runs through `clean()`** because jsPDF's built-in fonts are WinAnsi
-  only — it strips `**markdown**`, arrows, non-breaking spaces, and smart quotes
-  so nothing renders as a blank box.
-- **Keep-alive `exit 6` = curl "couldn't resolve host" = blank `SUPABASE_URL`
-  secret.** Hardened with a preflight secret check (clear error), curl retries
-  (`--retry-all-errors`), Supabase ping first + app ping `continue-on-error`, and
-  an every-3-days schedule (was 5) so one missed run can't exceed Supabase's
-  ~7-day auto-pause window.
-- **Demo credentials are NOT in GitHub secrets** — only the deployed app (Vercel)
-  uses them; the workflows never build or run the app.
-- **Committed to `main` directly**, user pushes. Matches the established repo
-  workflow.
+- **AI inputs are draft-then-confirm.** Quick-add text and receipt scans only
+  prefill the transaction form; the user always saves. AI output is validated
+  (`mergeAiDraft`, `normalizeReceipt`): bad/zero/huge amounts leave the field
+  empty, impossible or future dates fall back to today.
+- **Every AI path has a deterministic fallback** — rule-based quick-add parse,
+  localized receipt error with a usable form, `shopping` for CSV rows. This is
+  exactly what is keeping the app usable while OpenRouter has no credits.
+- **Recurring = lazy materialization on app open.** `RecurringRunner` calls
+  `/api/recurring/run` once per session; it creates any missed occurrences
+  (catch-up) and bumps `last_generated_month`. No cron, Rp 0 cost.
+- **The recurring unique index is NOT partial** (spec deviation). PostgREST's
+  upsert `ON CONFLICT (recurring_rule_id, date)` can't target a partial index; a
+  plain one behaves the same because NULLs are distinct, so normal transactions
+  never conflict. Two concurrent runs were tested live: no duplicates.
+- **Goal top-ups are manual contributions**, each mirrored as a `savings` expense
+  so balances stay honest.
+- **CSV import auto-guesses the mapping** (header keywords in ID/EN, then value
+  patterns) and the date format, but every column + the format stay editable in
+  the modal. Short keywords (`cr`, `db`) must be whole words so
+  "Description" isn't read as credit. Rows matching an existing transaction
+  (date + amount + normalized description) start unchecked as "Duplicate?";
+  identical rows *inside* one file are not flagged (two coffees a day is normal).
+- **CSV categorization in batches of 50** → at most 10 AI calls for the 500-row cap.
+- **Duplicate check uses the Transactions page's loaded list** (500 most recent)
+  instead of a separate fetch — `/api/transactions` only filters by month.
+- **Planning client helpers live in `src/lib/planning/api.ts`**; server loaders
+  (`budgets-server.ts`, `goals-server.ts`) are shared by the routes and the chat tools.
+- **Seed targets the Try-the-demo account**, not a personal test account.
+- **Committed to `main` directly**, user pushes. Matches the established repo workflow.
 
 ## Tests — status
 
-- **`npm test` (vitest): 31 pass, 0 fail** (28 prior + 3 new in `report-pdf.test.ts`:
-  full report / no-AI / empty-highlights + id locale).
+- **`npm test` (vitest): 115 pass, 0 fail, 15 files** (31 before this plan + 84 new).
 - **`npm run typecheck`**, **`npm run lint`**, **`npm run build`**: all clean.
-- **Not machine-verifiable this session (needs a human/browser):**
-  - The actual PDF *download* firing (client-side, auth-gated) — verified it
-    *generates* valid `%PDF-` bytes in a Node harness, but not the browser download.
-  - Visual 375px rendering — verified via CSS reasoning + build + production CSS
-    grep, not live screenshots (no screenshot tool in session).
-  - The hardened keep-alive workflow's live run — needs a GitHub Actions dispatch.
+- **i18n parity** (`messages/en.json` vs `messages/id.json`): identical key sets.
+- **Live API checks** (demo login against a local dev server) passed for every
+  route: budgets, goals + contributions, recurring (catch-up, concurrency,
+  idempotency, FK set null), CSV import (201/400/401), plus the chat tools
+  executed directly against the demo DB (Entertainment over, Food warn; Laptop
+  baru Rp 1.375.000/month for 4 months).
 
 ## Last command run + result
 
-Production verification curl against `ai-finance-tracker-delta-drab.vercel.app`:
-- `/favicon.ico` → **200**, `image/x-icon`, **1119 bytes** (byte-identical to local)
-- `/favicon.png` → **200**, `image/png`, **1310 bytes** (byte-identical to local)
-- `<link rel="icon" href="/favicon.ico" ...>` present in `<head>`
-- Routes: `/`, `/login`, `/api/health` → 200; `/reports`, `/dashboard` → 307 (auth)
-- Responsive CSS markers all present in the live bundle: `1.4fr` ×2, `1.05fr` ×1,
-  `100dvh` ×6, `min-height:2.75rem` ×1, `hover:none` ×1
-
-**Result: all production checks passed.**
+`npm test && npm run typecheck && npm run lint && npm run build` → all exit 0,
+115 tests pass. `/api/ai/chat` → stream error 402 (OpenRouter credits).
