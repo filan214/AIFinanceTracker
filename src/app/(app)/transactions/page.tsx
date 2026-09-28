@@ -7,6 +7,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,7 @@ import {
   TransactionModal,
   type TransactionDraft,
 } from "@/components/transactions/transaction-modal";
+import { CsvImportModal } from "@/components/transactions/csv-import-modal";
 import {
   CATEGORY_KEYS,
   type CategoryKey,
@@ -36,8 +38,11 @@ export default function TransactionsPage() {
   const t = useTranslations("transactions");
   const tCat = useTranslations("categories");
   const tCommon = useTranslations("common");
+  const tCsv = useTranslations("csvImport");
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [csvOpen, setCsvOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"all" | CategoryKey>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "income" | "expense">(
@@ -140,12 +145,27 @@ export default function TransactionsPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <Button size="sm" onClick={() => setModalOpen(true)}>
-            <Plus className="h-3.5 w-3.5" />
-            {t("addNew")}
-          </Button>
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setCsvOpen(true)}>
+              <Upload className="h-3.5 w-3.5" />
+              {tCsv("button")}
+            </Button>
+            <Button size="sm" onClick={() => setModalOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              {t("addNew")}
+            </Button>
+          </>
         }
       />
+
+      {notice && (
+        <div
+          role="status"
+          className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+        >
+          {notice}
+        </div>
+      )}
 
       <div className="sticky top-[52px] z-10 flex flex-col gap-2 border-b border-zinc-200 bg-white/95 pb-3 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95 sm:flex-row sm:items-center lg:top-0">
         <div className="relative flex-1">
@@ -262,6 +282,16 @@ export default function TransactionsPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={addTransaction}
+      />
+      <CsvImportModal
+        open={csvOpen}
+        onClose={() => setCsvOpen(false)}
+        existing={items}
+        onImported={(count) => {
+          setNotice(tCsv("imported", { count }));
+          setTimeout(() => setNotice(null), 4000);
+          loadTransactions();
+        }}
       />
     </div>
   );
