@@ -6,7 +6,10 @@ export const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY || "",
 });
 
-export const DEFAULT_MODEL = "google/gemini-2.5-flash";
+// Free tier: OpenRouter has no free gemini-2.5-flash slug, so this avoids
+// billing against account credits. Rate-limited per-account and may change
+// without notice — swap here if OpenRouter drops or replaces it.
+export const DEFAULT_MODEL = "google/gemma-4-26b-a4b-it:free";
 
 export async function askLLM(
   prompt: string,

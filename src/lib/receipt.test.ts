@@ -35,6 +35,12 @@ describe("normalizeReceipt", () => {
     expect(d?.description).toBe("");
   });
 
+  it("scales a raw fractional total back up (model emitted \"57.720\" as a JSON number, not a string)", () => {
+    expect(normalizeReceipt({ total: 57.72 }, TODAY)?.amount).toBe(57720);
+    expect(normalizeReceipt({ total: 12.5 }, TODAY)?.amount).toBe(12500);
+    expect(normalizeReceipt({ total: 125000 }, TODAY)?.amount).toBe(125000);
+  });
+
   it("returns null when there is no usable total", () => {
     expect(normalizeReceipt({ total: null }, TODAY)).toBeNull();
     expect(normalizeReceipt({ total: 0 }, TODAY)).toBeNull();

@@ -5,12 +5,19 @@ import { isValidYmd } from "./ymd";
 // Base64 data URL of a ~3 MB image; Vercel's request body limit is 4.5 MB.
 export const MAX_RECEIPT_DATA_URL_CHARS = 4_000_000;
 
+// A receipt total is never a fraction of a Rupiah. Some models emit an
+// ID-formatted amount ("57.720") as a raw JSON number, losing the thousands
+// separator to JSON's decimal point ("57.720" -> 57.72); scale it back up.
+function fixFractionalTotal(n: number): number {
+  return Number.isInteger(n) ? n : n * 1000;
+}
+
 // Turn the model's receipt JSON into an expense draft, or null if no total.
 export function normalizeReceipt(ai: unknown, today: string): Draft | null {
   const o = (ai && typeof ai === "object" ? ai : {}) as Record<string, unknown>;
   const total =
     typeof o.total === "number"
-      ? o.total
+      ? fixFractionalTotal(o.total)
       : typeof o.total === "string"
         ? parseRupiahNumber(o.total)
         : null;
