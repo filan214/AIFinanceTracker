@@ -52,6 +52,10 @@ export async function POST(req: Request) {
     tools,
     stopWhen: stepCountIs(5),
     maxOutputTokens: 2048,
+    // The free model's shared pool 429s under load; the AI SDK's default of
+    // 2 retries (2s, 4s backoff) often isn't enough to clear it. 4 retries
+    // (2s/4s/8s/16s, ~30s worst case) gives it a real chance before failing.
+    maxRetries: 4,
   });
 
   return result.toUIMessageStreamResponse({

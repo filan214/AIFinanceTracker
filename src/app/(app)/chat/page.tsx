@@ -74,6 +74,13 @@ export default function ChatPage() {
     return () => clearTimeout(id);
   }, []);
 
+  // The SDK's error.message is an internal string (e.g. "Failed after 5
+  // attempts. Last error: Provider returned error") — not something to show
+  // a user. Log it for debugging and show the localized message instead.
+  useEffect(() => {
+    if (error) console.error("Chat error:", error);
+  }, [error]);
+
   useEffect(() => {
     listSessions().then(setSessions);
   }, []);
@@ -316,7 +323,7 @@ export default function ChatPage() {
                 <div>
                   <ChatBubble
                     role="ai"
-                    content={error?.message || t("errorReply")}
+                    content={t("errorReply")}
                     error
                   />
                   <button
