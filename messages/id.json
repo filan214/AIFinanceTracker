@@ -305,6 +305,8 @@
     "toolGetTopExpenses": "pengeluaran terbesar",
     "toolGetBalance": "data saldo",
     "toolCompareMonths": "perbandingan bulan",
+    "toolGetBudgets": "data anggaran",
+    "toolGetGoals": "target tabungan",
     "chartCategoryTitle": "Pengeluaran per kategori",
     "compareTitle": "Perbandingan pengeluaran",
     "compareByCategory": "Per kategori",

@@ -7,7 +7,10 @@ import {
   dateRangeForPeriod,
   monthRange,
   currentMonth,
+  todayYmd,
 } from "./dates";
+import { loadBudgetsWithSpent } from "@/lib/planning/budgets-server";
+import { loadGoals } from "@/lib/planning/goals-server";
 
 export function buildChatTools(
   supabase: SupabaseClient,
@@ -347,6 +350,44 @@ export function buildChatTools(
           totalChangePercent: pct(rb.total, ra.total),
           categories,
         };
+      },
+    }),
+
+    getBudgets: tool({
+      description:
+        "Get the user's monthly category budgets with amount spent, percent used, remaining, and status (ok, warn at 80%+, over above 100%). Use for any question about budgets, spending limits, or whether a category is overspent.",
+      inputSchema: z.object({
+        month: z
+          .string()
+          .optional()
+          .describe("Month in YYYY-MM format. Defaults to the current month."),
+      }),
+      execute: async ({ month }) => {
+        const target = month || currentMonth();
+        try {
+          return { month: target, budgets: await loadBudgetsWithSpent(supabase, userId, target) };
+        } catch (e) {
+          return { error: (e as Error).message };
+        }
+      },
+    }),
+
+    getGoals: tool({
+      description:
+        "Get the user's savings goals with amount saved, target, percent, target date, status, and the monthly amount needed to reach each goal on time. Use for questions about savings goals or when a goal will be reached.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        try {
+          const goals = await loadGoals(supabase, userId, todayYmd());
+          return {
+            goals: goals.map(({ contributions, ...g }) => ({
+              ...g,
+              contributionCount: contributions.length,
+            })),
+          };
+        } catch (e) {
+          return { error: (e as Error).message };
+        }
       },
     }),
   };

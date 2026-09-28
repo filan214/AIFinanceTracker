@@ -305,6 +305,8 @@
     "toolGetTopExpenses": "top expenses",
     "toolGetBalance": "balance data",
     "toolCompareMonths": "month comparison",
+    "toolGetBudgets": "budget data",
+    "toolGetGoals": "savings goals",
     "chartCategoryTitle": "Spending by category",
     "compareTitle": "Spending comparison",
     "compareByCategory": "By category",

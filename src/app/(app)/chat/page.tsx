@@ -39,6 +39,8 @@ const TOOL_LABEL_KEYS: Record<string, string> = {
   getTopExpenses: "toolGetTopExpenses",
   getBalance: "toolGetBalance",
   compareMonths: "toolCompareMonths",
+  getBudgets: "toolGetBudgets",
+  getGoals: "toolGetGoals",
 };
 
 export default function ChatPage() {

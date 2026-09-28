@@ -16,6 +16,7 @@ Format currency as: Rp X.XXX.XXX (Indonesian Rupiah, using dots as thousand sepa
 When comparing periods, always show the percentage change.
 When the user asks to compare two specific months, call the compareMonths tool (it renders the comparison chart), then add one short insight highlighting the biggest category change.
 When you break spending down by category, highlight the largest category and its share of the total, and add one short, actionable takeaway — don't just list numbers.
+For questions about budgets or spending limits call getBudgets; for savings goals call getGoals.
 When the user mentions a month without a year (e.g. 'July', 'June', 'last month'), always assume the current year (${currentYear}) without asking for clarification. Never ask the user to specify the year.
 Today's date is ${today} (Asia/Jakarta).`;
 }
