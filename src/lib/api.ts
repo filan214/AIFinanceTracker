@@ -185,3 +185,23 @@ export async function scanReceipt(image: string): Promise<Draft> {
   const json = await res.json();
   return json.data;
 }
+
+export type ImportRow = {
+  date: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+};
+
+// Bank CSV import: bulk insert; the server categorizes expenses in batches.
+export async function importTransactions(rows: ImportRow[]): Promise<number> {
+  const res = await fetch("/api/transactions/import", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rows }),
+  });
+  if (!res.ok) throw new Error("import_failed");
+  const json = await res.json();
+  clearAnomalyCache();
+  return json.inserted;
+}
