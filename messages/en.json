@@ -153,6 +153,7 @@
     "scan": "Scan receipt",
     "scanning": "Reading receipt…",
     "scanError": "Couldn't read the receipt — fill the form manually.",
+    "scanBusy": "AI is busy or at today's limit — try again later, or fill the form manually.",
     "tooLarge": "Image is too large. Try a smaller photo."
   },
   "planning": {

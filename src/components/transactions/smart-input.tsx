@@ -33,8 +33,8 @@ export function SmartInput({ onDraft }: { onDraft: (d: Draft, ai: boolean) => vo
         return;
       }
       onDraft(await scanReceipt(dataUrl), true);
-    } catch {
-      setError(t("scanError"));
+    } catch (e) {
+      setError(t((e as Error).message === "receipt_busy" ? "scanBusy" : "scanError"));
     } finally {
       setScanning(false);
       if (fileRef.current) fileRef.current.value = "";

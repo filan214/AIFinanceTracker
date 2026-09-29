@@ -1,4 +1,5 @@
 import { EXPENSE_CATEGORY_KEYS, MAX_AMOUNT, type Draft, type ExpenseCategoryKey } from "./draft";
+import { extractJson } from "./llm-json";
 import { parseRupiahNumber } from "./quick-parse";
 import { isValidYmd } from "./ymd";
 
@@ -33,4 +34,21 @@ export function normalizeReceipt(ai: unknown, today: string): Draft | null {
       : "shopping";
 
   return { amount: Math.round(total), type: "expense", description: merchant, date, category_key };
+}
+
+// Keep "the AI call failed" (quota used up, model overloaded, network) apart
+// from "the model looked and found no total": only the latter is the photo's
+// fault. The SDK has already retried transient failures by the time ask throws.
+export async function readReceipt(
+  ask: () => Promise<string>,
+  today: string
+): Promise<{ draft: Draft } | { error: "busy" | "unreadable" }> {
+  let raw: string;
+  try {
+    raw = await ask();
+  } catch {
+    return { error: "busy" };
+  }
+  const draft = normalizeReceipt(extractJson(raw), today);
+  return draft ? { draft } : { error: "unreadable" };
 }

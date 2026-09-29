@@ -182,7 +182,7 @@ export async function scanReceipt(image: string): Promise<Draft> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ image }),
   });
-  if (!res.ok) throw new Error("receipt_unreadable");
+  if (!res.ok) throw new Error(res.status === 503 ? "receipt_busy" : "receipt_unreadable");
   const json = await res.json();
   return json.data;
 }

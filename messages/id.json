@@ -153,6 +153,7 @@
     "scan": "Pindai struk",
     "scanning": "Membaca struk…",
     "scanError": "Struk tidak terbaca — isi form secara manual.",
+    "scanBusy": "AI sedang sibuk atau mencapai batas harian — coba lagi nanti, atau isi form secara manual.",
     "tooLarge": "Gambar terlalu besar. Coba foto yang lebih kecil."
   },
   "planning": {

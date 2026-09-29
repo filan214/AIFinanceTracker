@@ -1,7 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { normalizeReceipt } from "./receipt";
+import { normalizeReceipt, readReceipt } from "./receipt";
 
 const TODAY = "2026-09-27";
+
+describe("readReceipt", () => {
+  it("returns a draft when the model reads a total", async () => {
+    const r = await readReceipt(async () => '```json\n{"total": 36500, "merchant": "Indomaret"}\n```', TODAY);
+    expect(r).toEqual({
+      draft: { amount: 36500, type: "expense", description: "Indomaret", date: TODAY, category_key: "shopping" },
+    });
+  });
+
+  it("reports busy — not unreadable — when the AI call itself fails (quota, overload)", async () => {
+    const r = await readReceipt(async () => {
+      throw new Error("You exceeded your current quota");
+    }, TODAY);
+    expect(r).toEqual({ error: "busy" });
+  });
+
+  it("reports unreadable when the model answers but finds no total", async () => {
+    expect(await readReceipt(async () => '{"total": null}', TODAY)).toEqual({ error: "unreadable" });
+    expect(await readReceipt(async () => "I can't see a receipt.", TODAY)).toEqual({ error: "unreadable" });
+  });
+});
 
 describe("normalizeReceipt", () => {
   it("maps a clean AI reply to an expense draft", () => {

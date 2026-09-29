@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { askLLMWithImage } from "@/lib/llm";
-import { extractJson } from "@/lib/llm-json";
-import { normalizeReceipt, MAX_RECEIPT_DATA_URL_CHARS } from "@/lib/receipt";
+import { readReceipt, MAX_RECEIPT_DATA_URL_CHARS } from "@/lib/receipt";
 import { todayYmd } from "@/lib/ai/dates";
 
 const Body = z.object({
@@ -35,14 +34,10 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid image" }, { status: 400 });
 
   const today = todayYmd();
-  try {
-    const raw = await askLLMWithImage(buildPrompt(today), parsed.data.image, {
-      maxOutputTokens: 256,
-    });
-    const draft = normalizeReceipt(extractJson(raw), today);
-    if (!draft) return NextResponse.json({ error: "unreadable" }, { status: 422 });
-    return NextResponse.json({ data: draft });
-  } catch {
-    return NextResponse.json({ error: "unreadable" }, { status: 422 });
-  }
+  const result = await readReceipt(
+    () => askLLMWithImage(buildPrompt(today), parsed.data.image, { maxOutputTokens: 256 }),
+    today
+  );
+  if ("draft" in result) return NextResponse.json({ data: result.draft });
+  return NextResponse.json(result, { status: result.error === "busy" ? 503 : 422 });
 }
