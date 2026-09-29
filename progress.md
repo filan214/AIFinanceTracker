@@ -1,6 +1,6 @@
 # Progress — Smart Finn Track
 
-_Last updated: 2026-09-28 · branch `main` · pushed through `6ed6e48`, live on production_
+_Last updated: 2026-09-29 · branch `main` · pushed through `6ed6e48`, live on production_
 
 ## Completed ✅
 
@@ -86,23 +86,21 @@ Nothing is half-built. Open items, all needing a human or an external system:
 - [ ] **Receipt camera on a real phone** — never tested outside a desktop browser.
 - [ ] **Hardened keep-alive workflow run** (carried over from before this
   plan) — dispatch it manually in GitHub Actions to confirm green.
-- [ ] **Click-through of this session's last 6 commits** (`c4a1769` through
-  `6ed6e48`) in a browser — Chrome was disconnected for that whole stretch;
-  they're verified by typecheck/lint/build/tests and code review only. See
-  `handoff.md` for the exact list.
+- [x] **Click-through of this session's last 6 commits** — done 2026-09-29,
+  all 5 UI fixes PASS on production. See `handoff.md` for details.
 - [ ] **Free model rate limits remain a fact of life.** `google/gemma-4-26b-a4b-it:free`
   sits on a shared pool and can still 429 under load; the fallbacks and the
   chat retry soften this but don't eliminate it.
 
 ## Next steps
 
-See `handoff.md` for the immediate next action with exact files.
+See `handoff.md` for state. Click-through verification is done; what's left
+needs a human or an external system:
 
-1. Reconnect Chrome and click through the 6 UI-only fixes below.
-2. Remove `TOKENROUTER_API_KEY` from Vercel; revoke the TokenRouter key.
-3. Test the receipt camera on a real phone.
-4. Dispatch the keep-alive GitHub Action manually.
-5. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
+1. Remove `TOKENROUTER_API_KEY` from Vercel; revoke the TokenRouter key.
+2. Test the receipt camera on a real phone.
+3. Dispatch the keep-alive GitHub Action manually.
+4. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
    `tCat`) still left alone deliberately.
 
 ## Last touched files / sections
