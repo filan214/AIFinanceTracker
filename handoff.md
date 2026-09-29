@@ -1,6 +1,6 @@
 # Handoff — Smart Finn Track
 
-_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6` (live on prod); `d7dfe88` + the docs commit after it await push_
+_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6` (live on prod); `d7dfe88` and the commits after it await push_
 
 ## Pick up here
 
@@ -33,17 +33,17 @@ not duplicated here.
 - **User:** remove `OPENROUTER_API_KEY` from Vercel (unused since `87f6fb6`);
   retest the receipt camera on a real phone; dispatch the keep-alive GitHub
   Action.
-- **Optional code task:** the receipt route reports every failure (429/503
-  included) as `unreadable`. Retrying once and showing "AI busy, try again"
-  would make quota exhaustion obvious instead of blaming the photo.
+- **Done:** receipt scan now says "AI busy / at today's limit" (`503`)
+  when the AI call fails, and "couldn't read" (`422`) only when the model
+  saw no total — see `readReceipt()` in `src/lib/receipt.ts`.
 - **Backlog:** dead `CATEGORY_KEYS` / `tCat` in
   `src/components/transactions/transaction-modal.tsx` (grep first, then
   delete, then run typecheck + lint + tests).
 
 ## State snapshot
 
-- **Git**: `main` = `d7dfe88` + one docs commit. Working tree clean.
-- **Tests**: `npm test` → 150/150. `typecheck`, `lint`, `build` all exit 0.
+- **Git**: `main` is ahead of `origin/main` (see header). Working tree clean.
+- **Tests**: `npm test` → 153/153. `typecheck`, `lint`, `build` all exit 0.
 - **AI**: `src/lib/llm.ts` → `@ai-sdk/google`. `askLLM(prompt, { lite })`
   picks the model; `modelSettings()` gives 3.5 Flash `thinkingBudget: 0`
   (its thinking tokens would truncate short JSON replies) and gives Lite no

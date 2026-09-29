@@ -1,6 +1,6 @@
 # Progress — Smart Finn Track
 
-_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6`; `d7dfe88` + the docs commit after it await push_
+_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6`; `d7dfe88` and the commits after it await push_
 
 ## Completed ✅
 
@@ -57,7 +57,7 @@ New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Ve
 Schema: `supabase/planning.sql` + `supabase/Seed Planning for Demo User.sql`
 (run by the user in the Supabase SQL Editor; seeded rows verified).
 
-Quality gates at HEAD: **150 tests pass** (134 before 2026-09-30 + 16 new),
+Quality gates at HEAD: **153 tests pass** (134 before 2026-09-30 + 19 new),
 typecheck, lint, build, and en/id i18n parity all clean. Every new API route
 was checked live; full Chrome click-through of all 5 pending UI fixes done
 on production 2026-09-29 (see `handoff.md`) — all PASS. A second real
@@ -103,7 +103,7 @@ Nothing is half-built. Open items, all needing a human or an external system:
 
 - [x] **Remove the unused `TOKENROUTER_API_KEY`** from Vercel — done by the
   user 2026-09-30.
-- [ ] **Push `d7dfe88`** (request diet) and the docs commit after it.
+- [ ] **Push** `d7dfe88` (request diet) and the commits after it.
 - [ ] **Remove `OPENROUTER_API_KEY`** from Vercel (and `.env.local`) — no
   code reads it since `87f6fb6`.
 - [ ] **Receipt camera on a real phone** — user tried 2026-09-30 and got
@@ -116,9 +116,11 @@ Nothing is half-built. Open items, all needing a human or an external system:
   it. When it's out they error until midnight Pacific; categorize and
   quick-add fall back to keyword rules. Flash-Lite's own daily limit is
   still unknown — check at aistudio.google.com/rate-limit.
-- [ ] **(Optional) Receipt route masks every failure as `unreadable`.** A
-  429/503 shows "couldn't read the receipt" — the misleading message that
-  started the 2026-09-30 investigation. Could retry once and show "AI busy".
+- [x] **Receipt errors are honest now** — `readReceipt()` in
+  `src/lib/receipt.ts`: an AI call failure (quota/overload, after the SDK's
+  own 2 retries) → `503 busy` → "AI is busy or at today's limit"; only a
+  model reply with no total → `422 unreadable`. Verified live against a real
+  quota 429.
 
 ## Next steps
 
@@ -128,8 +130,7 @@ See `handoff.md` for state.
    receipt, chat, dashboard anomaly) — ideally on the phone.
 2. Remove `OPENROUTER_API_KEY` from Vercel.
 3. Dispatch the keep-alive GitHub Action manually.
-4. (Optional) Honest receipt error + one retry (see Pending).
-5. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
+4. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
    `tCat`) still left alone deliberately.
 
 ## Last touched files / sections
