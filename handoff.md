@@ -1,48 +1,53 @@
 # Handoff — Smart Finn Track
 
-_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6` (live on prod); `d7dfe88` and the commits after it await push_
+_Last updated: 2026-09-30 · branch `main` · pushed through `d4e863f` — matches `origin/main`, deployed to production_
 
 ## Pick up here
 
-**Nothing is broken or mid-edit.** This session moved all AI from OpenRouter
-to Google AI Studio (Gemini) and then cut the number of AI requests. Details
-and rationale live in `progress.md` (**Completed** 11–12, **Key decisions**) —
-not duplicated here.
+**Nothing is broken, mid-edit, or unpushed.** This session moved all AI from
+OpenRouter to Google AI Studio (Gemini), cut the number of AI requests, and
+made receipt errors honest. Details and rationale live in `progress.md`
+(**Completed** 11–13, **Key decisions**) — not duplicated here.
 
 ### First thing to do
 
-1. **Check whether `d7dfe88` is pushed** (`git status -sb`). If not, the user
-   pushes — we commit to `main`, the user pushes.
-2. **After the daily quota reset** (midnight Pacific ≈ 14:00 WIB), smoke-test
-   production: quick-add ("kopi 25rb kemarin" → `ai:true`), receipt scan,
-   one chat message, dashboard load. `d7dfe88`'s lite-model prompts were
-   verified live locally, but not yet on prod.
+**Smoke-test the rest of production** (no need to wait for a reset):
+quick-add ("kopi 25rb kemarin" → `ai:true`), one chat message, dashboard
+load. Receipt scan already passed on prod at `d4e863f` (200 → 36500 /
+INDOMARET). `d7dfe88`'s lite-model paths (quick-add, categorize, anomaly)
+are unit-tested and were checked live locally, but not yet on prod. Ideally
+the user scans a real receipt on their phone — that closes the "real
+phone" item too.
 
 ### Watch out: the quota is tiny — don't burn it testing
 
-- `gemini-3.5-flash`: **20 requests/day per project** (confirmed from a 429).
+- `gemini-3.5-flash`: a 429 said `limit: 20`, but a call worked ~30 min
+  later, before the daily reset — so it's most likely **20 per minute**,
+  with an unknown daily cap. Not confirmed: read aistudio.google.com/rate-limit.
   Used by chat, receipt, and reports only.
 - `gemini-3.5-flash-lite`: separate quota, limit unknown (ask the user to
   read aistudio.google.com/rate-limit). Used by categorize, CSV import,
   quick-add, chat titles, anomaly.
-- On 2026-09-30 the 3.5 Flash quota was used up by testing. Every live
-  probe counts — prefer unit tests and mocks, and batch the live checks.
+- On 2026-09-30 a burst of test calls hit that 429. Every live probe
+  counts — prefer unit tests and mocks, and space out live checks. When a
+  429 comes back, log the full error (it names the quota window) instead
+  of truncating it.
 
 ### Open items (see `progress.md` → Pending)
 
 - **User:** remove `OPENROUTER_API_KEY` from Vercel (unused since `87f6fb6`);
   retest the receipt camera on a real phone; dispatch the keep-alive GitHub
   Action.
-- **Done:** receipt scan now says "AI busy / at today's limit" (`503`)
-  when the AI call fails, and "couldn't read" (`422`) only when the model
-  saw no total — see `readReceipt()` in `src/lib/receipt.ts`.
+- **If a receipt scan fails on prod:** "AI is busy or at today's limit"
+  means quota/overload (`503`) — wait for the reset, don't debug the photo.
+  "Couldn't read the receipt" (`422`) means the model saw no total.
 - **Backlog:** dead `CATEGORY_KEYS` / `tCat` in
   `src/components/transactions/transaction-modal.tsx` (grep first, then
   delete, then run typecheck + lint + tests).
 
 ## State snapshot
 
-- **Git**: `main` is ahead of `origin/main` (see header). Working tree clean.
+- **Git**: `main` = `origin/main` (plus this docs update). No stash, no worktree.
 - **Tests**: `npm test` → 153/153. `typecheck`, `lint`, `build` all exit 0.
 - **AI**: `src/lib/llm.ts` → `@ai-sdk/google`. `askLLM(prompt, { lite })`
   picks the model; `modelSettings()` gives 3.5 Flash `thinkingBudget: 0`

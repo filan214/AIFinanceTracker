@@ -5,14 +5,14 @@ export const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
 });
 
-// Google AI Studio free tier: a small per-project, per-model daily request
-// quota (20/day for 3.5 Flash) that resets at midnight Pacific; over it,
-// calls 429 (never billed). Swap here to change models.
+// Google AI Studio free tier: small per-project, per-model request quotas
+// (per-minute and per-day; the daily one resets at midnight Pacific); over
+// either, calls 429 (never billed). Swap here to change models.
 // (gemini-2.5-flash is closed to new projects; 3.7/3.8 ignore thinkingBudget.)
 export const DEFAULT_MODEL = "gemini-3.5-flash";
 
 // Simple classification/extraction tasks run on Flash-Lite, which has its own
-// separate daily quota — keeping 3.5 Flash's 20/day for chat, receipts, reports.
+// separate quota — keeping 3.5 Flash's for chat, receipts, reports.
 export const LITE_MODEL = "gemini-3.5-flash-lite";
 
 // 3.5 Flash "thinks" by default, and thinking tokens count against

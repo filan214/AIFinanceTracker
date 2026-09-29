@@ -1,10 +1,11 @@
 # Progress — Smart Finn Track
 
-_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6`; `d7dfe88` and the commits after it await push_
+_Last updated: 2026-09-30 · branch `main` · pushed through `d4e863f` — matches `origin/main`, deployed to production_
 
 ## Completed ✅
 
-Items 1–10 are on `main` (`293e9b2..6ed6e48`); 11–12 were added 2026-09-30.
+Items 1–10 are on `main` (`293e9b2..6ed6e48`); 11–13 were added 2026-09-30
+(`87f6fb6..d4e863f`). All pushed.
 New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Vercel).
 
 1. **Quick-add from text** — type "kopi 25rb kemarin" in the transaction modal;
@@ -47,12 +48,18 @@ New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Ve
     route's catch-all reported it as `unreadable`. Now `@ai-sdk/google` →
     `gemini-3.5-flash`, thinking disabled. Verified live on prod: receipt,
     quick-add (`ai:true`), and streaming chat with tool calls.
-12. **AI request diet** (`d7dfe88`) against the 20/day quota: simple tasks
+12. **AI request diet** (`d7dfe88`) against the small free quota: simple tasks
     (categorize, CSV import, quick-add parse, chat title, anomaly) run on
     `gemini-3.5-flash-lite` (separate quota); keyword rules run before AI
     for single + CSV categorization; the anomaly route skips AI when no
     category is >20% above its 3-week average; `isNew` computed in code,
     compact anomaly prompt. Lite categorize + anomaly verified live locally.
+13. **Honest receipt errors** (`bc6f0a9`): `readReceipt()` in
+    `src/lib/receipt.ts` splits an AI call failure (quota/overload, after
+    the SDK's own 2 retries) → `503 busy` → "AI is busy or at today's limit"
+    from a model reply with no total → `422 unreadable` → "couldn't read".
+    No extra retry, so a spent daily quota isn't hammered. Verified live
+    against a real quota 429.
 
 Schema: `supabase/planning.sql` + `supabase/Seed Planning for Demo User.sql`
 (run by the user in the Supabase SQL Editor; seeded rows verified).
@@ -86,7 +93,7 @@ multi-user testing.
   Pacific (~14:00 WIB) and 429s instead of billing. `gemini-2.5-flash` is
   closed to new projects; 3.7/3.8 Flash ignore `thinkingBudget` (their
   thinking tokens would truncate categorize's 16-token reply) and 503 often.
-  So: `gemini-3.5-flash` (**20 req/day**, confirmed from a 429) for chat,
+  So: `gemini-3.5-flash` for chat,
   receipt, reports; `gemini-3.5-flash-lite` (own quota, rejects a
   thinkingConfig with 400) for everything simple. TokenRouter was evaluated
   earlier and rejected; no code depends on it.
@@ -103,7 +110,10 @@ Nothing is half-built. Open items, all needing a human or an external system:
 
 - [x] **Remove the unused `TOKENROUTER_API_KEY`** from Vercel — done by the
   user 2026-09-30.
-- [ ] **Push** `d7dfe88` (request diet) and the commits after it.
+- [x] **Push** `d7dfe88..d4e863f` — done by the user 2026-09-30.
+- [ ] **Smoke-test prod**: receipt already passed on prod at `d4e863f`;
+  still to do — quick-add, one chat message, dashboard load (the
+  `d7dfe88` lite-model paths, unit-tested + checked live locally only).
 - [ ] **Remove `OPENROUTER_API_KEY`** from Vercel (and `.env.local`) — no
   code reads it since `87f6fb6`.
 - [ ] **Receipt camera on a real phone** — user tried 2026-09-30 and got
@@ -112,22 +122,23 @@ Nothing is half-built. Open items, all needing a human or an external system:
 - [ ] **Hardened keep-alive workflow run** (carried over) — dispatch it
   manually in GitHub Actions to confirm green.
 - [x] **Click-through of the 5 UI fixes** — done 2026-09-29, all PASS.
-- [ ] **20/day on 3.5 Flash is tight.** Receipt, chat and report still share
-  it. When it's out they error until midnight Pacific; categorize and
-  quick-add fall back to keyword rules. Flash-Lite's own daily limit is
-  still unknown — check at aistudio.google.com/rate-limit.
-- [x] **Receipt errors are honest now** — `readReceipt()` in
-  `src/lib/receipt.ts`: an AI call failure (quota/overload, after the SDK's
-  own 2 retries) → `503 busy` → "AI is busy or at today's limit"; only a
-  model reply with no total → `422 unreadable`. Verified live against a real
-  quota 429.
+- [ ] **3.5 Flash's exact limits are unknown.** A burst of ~10 test calls
+  hit a 429 naming `generate_content_free_tier_requests, limit: 20`, but
+  a prod call succeeded ~30 min later, before the midnight-Pacific reset —
+  so that 20 is most likely a **per-minute** cap, not per-day (the error
+  text was truncated; its window wasn't captured). Read the real RPM/RPD
+  for 3.5 Flash and 3.5 Flash-Lite at aistudio.google.com/rate-limit. When
+  a quota is out, receipt shows "AI busy", chat/report error; categorize
+  and quick-add fall back to keyword rules.
+- [x] **Receipt errors are honest now** — see Completed #13.
 
 ## Next steps
 
 See `handoff.md` for state.
 
-1. Push `d7dfe88`; after the quota reset, smoke-test prod (quick-add,
-   receipt, chat, dashboard anomaly) — ideally on the phone.
+1. Smoke-test prod (quick-add, chat, dashboard anomaly; receipt already
+   passed) — ideally on the phone. Read real RPM/RPD at
+   aistudio.google.com/rate-limit.
 2. Remove `OPENROUTER_API_KEY` from Vercel.
 3. Dispatch the keep-alive GitHub Action manually.
 4. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
@@ -141,5 +152,6 @@ See `handoff.md` for state.
 - `src/lib/anomaly.ts` (`hasSpendingSpike`, `markNewTransactions`), `src/app/api/ai/anomaly/route.ts` — gate + compact prompt
 - `src/app/api/ai/parse/route.ts`, `src/lib/chat/title.ts` — lite model
 - `src/app/api/ai/chat/route.ts` — Google model, key check; `src/lib/ai/tools.ts` — `getTransactions` drops `id`
+- `src/lib/receipt.ts` (`readReceipt`), `src/app/api/ai/receipt/route.ts`, `src/lib/api.ts` (`scanReceipt`), `src/components/transactions/smart-input.tsx`, `messages/{en,id}.json` (`scanBusy`) — busy vs unreadable
 - `package.json` — `+@ai-sdk/google`, `-@ai-sdk/openai`; `README.md` — setup/stack
 - `handoff.md`, `progress.md` — this documentation
