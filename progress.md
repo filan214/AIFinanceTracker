@@ -1,11 +1,11 @@
 # Progress — Smart Finn Track
 
-_Last updated: 2026-09-29 · branch `main` · pushed through `6ed6e48`, live on production_
+_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6`; `d7dfe88` + the docs commit after it await push_
 
 ## Completed ✅
 
-All items below are on `main` (`293e9b2..6ed6e48`) and live on production.
-No uncommitted changes, no new environment variables.
+Items 1–10 are on `main` (`293e9b2..6ed6e48`); 11–12 were added 2026-09-30.
+New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Vercel).
 
 1. **Quick-add from text** — type "kopi 25rb kemarin" in the transaction modal;
    AI (with keyword-then-rule fallback) prefills amount, type, category, date, description.
@@ -41,14 +41,28 @@ No uncommitted changes, no new environment variables.
     nonexistent id now 404 (was 500); `/api/budgets?month=2026-13` now 400;
     dashboard cards no longer double-fetch on mount; Planning's active tab
     now always matches `?tab=` across every navigation, not just first mount.
+11. **AI moved off OpenRouter to Google AI Studio directly** (`87f6fb6`,
+    live on prod). Receipt scans "couldn't read" clear receipts because the
+    free OpenRouter model's shared upstream pool 429'd every request and the
+    route's catch-all reported it as `unreadable`. Now `@ai-sdk/google` →
+    `gemini-3.5-flash`, thinking disabled. Verified live on prod: receipt,
+    quick-add (`ai:true`), and streaming chat with tool calls.
+12. **AI request diet** (`d7dfe88`) against the 20/day quota: simple tasks
+    (categorize, CSV import, quick-add parse, chat title, anomaly) run on
+    `gemini-3.5-flash-lite` (separate quota); keyword rules run before AI
+    for single + CSV categorization; the anomaly route skips AI when no
+    category is >20% above its 3-week average; `isNew` computed in code,
+    compact anomaly prompt. Lite categorize + anomaly verified live locally.
 
 Schema: `supabase/planning.sql` + `supabase/Seed Planning for Demo User.sql`
 (run by the user in the Supabase SQL Editor; seeded rows verified).
 
-Quality gates at HEAD: **134 tests pass** (31 before this plan + 103 new),
+Quality gates at HEAD: **150 tests pass** (134 before 2026-09-30 + 16 new),
 typecheck, lint, build, and en/id i18n parity all clean. Every new API route
-was checked live; Chrome click-through done on production earlier this
-session (before the free-model switch and the review-minor fixes below).
+was checked live; full Chrome click-through of all 5 pending UI fixes done
+on production 2026-09-29 (see `handoff.md`) — all PASS. A second real
+account (`ferdiputra1404@gmail.com`) now exists on prod, useful for future
+multi-user testing.
 
 ## Key decisions
 
@@ -65,11 +79,19 @@ session (before the free-model switch and the review-minor fixes below).
   contribution rolled back if that expense insert fails.
 - **CSV: auto-guess + editable mapping**; duplicates = same date + amount +
   normalized description vs. the 500 most recent transactions.
-- **AI model: free tier over paid.** No free `gemini-2.5-flash` exists on
-  OpenRouter, so the model was switched to `google/gemma-4-26b-a4b-it:free`
-  when the account ran out of credits. A move to TokenRouter/MiniMax-M3 with
-  the user's own key was evaluated and rejected — the key had no working
-  quota for any model it could access. No code depends on TokenRouter.
+- **AI model: free tier, never paid — Google AI Studio direct.** OpenRouter
+  was dropped: its `:free` vision models sit on saturated shared pools, and
+  paid models bill credits (no reset; account at 0 credits). Google's free
+  tier is a per-project, per-model daily quota that resets at midnight
+  Pacific (~14:00 WIB) and 429s instead of billing. `gemini-2.5-flash` is
+  closed to new projects; 3.7/3.8 Flash ignore `thinkingBudget` (their
+  thinking tokens would truncate categorize's 16-token reply) and 503 often.
+  So: `gemini-3.5-flash` (**20 req/day**, confirmed from a 429) for chat,
+  receipt, reports; `gemini-3.5-flash-lite` (own quota, rejects a
+  thinkingConfig with 400) for everything simple. TokenRouter was evaluated
+  earlier and rejected; no code depends on it.
+- **Request count is the cost, not tokens.** Prefer skipping a call
+  (keyword rules, anomaly spike gate, caching) over trimming prompts.
 - **API routes validate id shape (`z.uuid()`) before hitting the DB**, and
   use `.maybeSingle()` + an explicit 404 instead of `.single()`'s 500 on a
   missing row — pattern now consistent across budgets/goals/recurring.
@@ -79,39 +101,44 @@ session (before the free-model switch and the review-minor fixes below).
 
 Nothing is half-built. Open items, all needing a human or an external system:
 
-- [ ] **Remove the unused `TOKENROUTER_API_KEY`** from the Vercel project's
-  environment variables (added, then the switch was called off; the app
-  never reads it). Also revoke that key on TokenRouter's side since it was
-  shared in chat.
-- [ ] **Receipt camera on a real phone** — never tested outside a desktop browser.
-- [ ] **Hardened keep-alive workflow run** (carried over from before this
-  plan) — dispatch it manually in GitHub Actions to confirm green.
-- [x] **Click-through of this session's last 6 commits** — done 2026-09-29,
-  all 5 UI fixes PASS on production. See `handoff.md` for details.
-- [ ] **Free model rate limits remain a fact of life.** `google/gemma-4-26b-a4b-it:free`
-  sits on a shared pool and can still 429 under load; the fallbacks and the
-  chat retry soften this but don't eliminate it.
+- [x] **Remove the unused `TOKENROUTER_API_KEY`** from Vercel — done by the
+  user 2026-09-30.
+- [ ] **Push `d7dfe88`** (request diet) and the docs commit after it.
+- [ ] **Remove `OPENROUTER_API_KEY`** from Vercel (and `.env.local`) — no
+  code reads it since `87f6fb6`.
+- [ ] **Receipt camera on a real phone** — user tried 2026-09-30 and got
+  "couldn't read"; root cause was the OpenRouter 429 (fixed in `87f6fb6`).
+  Needs a retest on the phone now that Gemini is live.
+- [ ] **Hardened keep-alive workflow run** (carried over) — dispatch it
+  manually in GitHub Actions to confirm green.
+- [x] **Click-through of the 5 UI fixes** — done 2026-09-29, all PASS.
+- [ ] **20/day on 3.5 Flash is tight.** Receipt, chat and report still share
+  it. When it's out they error until midnight Pacific; categorize and
+  quick-add fall back to keyword rules. Flash-Lite's own daily limit is
+  still unknown — check at aistudio.google.com/rate-limit.
+- [ ] **(Optional) Receipt route masks every failure as `unreadable`.** A
+  429/503 shows "couldn't read the receipt" — the misleading message that
+  started the 2026-09-30 investigation. Could retry once and show "AI busy".
 
 ## Next steps
 
-See `handoff.md` for state. Click-through verification is done; what's left
-needs a human or an external system:
+See `handoff.md` for state.
 
-1. Remove `TOKENROUTER_API_KEY` from Vercel; revoke the TokenRouter key.
-2. Test the receipt camera on a real phone.
+1. Push `d7dfe88`; after the quota reset, smoke-test prod (quick-add,
+   receipt, chat, dashboard anomaly) — ideally on the phone.
+2. Remove `OPENROUTER_API_KEY` from Vercel.
 3. Dispatch the keep-alive GitHub Action manually.
-4. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
+4. (Optional) Honest receipt error + one retry (see Pending).
+5. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
    `tCat`) still left alone deliberately.
 
 ## Last touched files / sections
 
-- `src/app/api/{budgets,goals,goals/contributions,recurring}/route.ts` — id/month validation, 404s, atomic contribution
-- `src/lib/ymd.ts` (`isValidMonth`), `src/lib/draft.ts` (`MAX_AMOUNT` exported), `src/lib/receipt.ts` — validation fixes
-- `src/components/recurring-runner.tsx` — per-user session key
-- `src/app/(app)/dashboard/page.tsx` — first-fetch dataVersion fix
-- `src/components/transactions/smart-input.tsx` — Fill disabled during scan
-- `src/components/transactions/csv-import-modal.tsx` — reset-effect deps, header row
-- `src/app/(app)/planning/page.tsx` — `useSearchParams` + `router.replace` for tab sync
-- `src/lib/anomaly.ts` (`filterTriggeredTransactions`), `src/app/api/ai/anomaly/route.ts` — category-mismatch fix
-- `src/app/api/ai/chat/route.ts`, `src/app/(app)/chat/page.tsx` — retry + error message
+- `src/lib/llm.ts` — Google provider, `DEFAULT_MODEL`/`LITE_MODEL`, `modelSettings()`, thinking off
+- `src/lib/categorize.ts` (new) — keyword-first single categorization; `src/app/api/ai/categorize/route.ts` uses it
+- `src/lib/csv/batch.ts` (`categorizeKeywordFirst`), `src/app/api/transactions/import/route.ts`
+- `src/lib/anomaly.ts` (`hasSpendingSpike`, `markNewTransactions`), `src/app/api/ai/anomaly/route.ts` — gate + compact prompt
+- `src/app/api/ai/parse/route.ts`, `src/lib/chat/title.ts` — lite model
+- `src/app/api/ai/chat/route.ts` — Google model, key check; `src/lib/ai/tools.ts` — `getTransactions` drops `id`
+- `package.json` — `+@ai-sdk/google`, `-@ai-sdk/openai`; `README.md` — setup/stack
 - `handoff.md`, `progress.md` — this documentation

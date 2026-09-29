@@ -1,79 +1,65 @@
 # Handoff — Smart Finn Track
 
-_Last updated: 2026-09-29 · branch `main` · pushed through `6ed6e48` — live on production_
+_Last updated: 2026-09-30 · branch `main` · pushed through `87f6fb6` (live on prod); `d7dfe88` + the docs commit after it await push_
 
 ## Pick up here
 
-**Nothing is broken and nothing is mid-edit.** The planning/smart-input plan,
-its code review, and all 10 minor review findings are done, tested, pushed,
-and now click-through verified live on production.
+**Nothing is broken or mid-edit.** This session moved all AI from OpenRouter
+to Google AI Studio (Gemini) and then cut the number of AI requests. Details
+and rationale live in `progress.md` (**Completed** 11–12, **Key decisions**) —
+not duplicated here.
 
-### Done: click-through of the 5 UI fixes (2026-09-29)
+### First thing to do
 
-All verified against **production**
-(`https://ai-finance-tracker-delta-drab.vercel.app`) via Chrome automation:
+1. **Check whether `d7dfe88` is pushed** (`git status -sb`). If not, the user
+   pushes — we commit to `main`, the user pushes.
+2. **After the daily quota reset** (midnight Pacific ≈ 14:00 WIB), smoke-test
+   production: quick-add ("kopi 25rb kemarin" → `ai:true`), receipt scan,
+   one chat message, dashboard load. `d7dfe88`'s lite-model prompts were
+   verified live locally, but not yet on prod.
 
-1. **`src/components/recurring-runner.tsx`** — PASS. Logged in as demouser,
-   then as a second real account (`ferdiputra1404@gmail.com`) in the same
-   tab. `sessionStorage` held two independent
-   `sft:recurring-ran:<user-id>` keys (one per user id), confirming the flag
-   is per-user, not global. (Neither account had a due/overdue recurring
-   occurrence at test time, so the toast itself didn't fire — the
-   session-key evidence is what confirms the fix.)
-2. **`src/app/(app)/dashboard/page.tsx`** — PASS. Network tab showed
-   `/api/budgets?month=2026-09` and `/api/goals` each fire exactly once
-   (200) on a fresh `/dashboard` load.
-3. **`src/components/transactions/smart-input.tsx`** — PASS. Uploaded a
-   throwaway image to the camera input; UI showed "Reading receipt..." with
-   the camera icon spinning (scanning state active), then a graceful
-   "Couldn't read the receipt — fill the form manually" error, form stayed
-   usable. Confirmed in code that `Fill` is `disabled={busy || scanning ||
-   !text.trim()}`.
-4. **`src/components/transactions/csv-import-modal.tsx`** — PASS. Loaded a
-   test CSV, preview table had the Date/Description/Amount header row,
-   unchecked one row, then added a transaction in a second tab (fires
-   `TRANSACTIONS_CHANGED`); the unchecked row stayed unchecked after the
-   background reload.
-5. **`src/app/(app)/planning/page.tsx`** — PASS. `/planning?tab=goals` →
-   clicked sidebar "Planning" (bare `/planning`) → tab bar switched back to
-   Budgets, matching the URL.
+### Watch out: the quota is tiny — don't burn it testing
 
-Test artifacts (extra transaction, import) were cleaned up after; no lasting
-changes to demo data.
+- `gemini-3.5-flash`: **20 requests/day per project** (confirmed from a 429).
+  Used by chat, receipt, and reports only.
+- `gemini-3.5-flash-lite`: separate quota, limit unknown (ask the user to
+  read aistudio.google.com/rate-limit). Used by categorize, CSV import,
+  quick-add, chat titles, anomaly.
+- On 2026-09-30 the 3.5 Flash quota was used up by testing. Every live
+  probe counts — prefer unit tests and mocks, and batch the live checks.
 
-### After that, three items only a human can do
+### Open items (see `progress.md` → Pending)
 
-- **Vercel + TokenRouter cleanup**: remove `TOKENROUTER_API_KEY` from the
-  Vercel project's environment variables (unused — the switch was called
-  off), and revoke that key on TokenRouter's side (it was pasted into chat).
-- **Receipt camera on a real phone**: never tested outside a desktop
-  browser file picker.
-- **GitHub Actions**: manually dispatch the keep-alive workflow once to
-  confirm it's still green (carried over from well before this plan).
+- **User:** remove `OPENROUTER_API_KEY` from Vercel (unused since `87f6fb6`);
+  retest the receipt camera on a real phone; dispatch the keep-alive GitHub
+  Action.
+- **Optional code task:** the receipt route reports every failure (429/503
+  included) as `unreadable`. Retrying once and showing "AI busy, try again"
+  would make quota exhaustion obvious instead of blaming the photo.
+- **Backlog:** dead `CATEGORY_KEYS` / `tCat` in
+  `src/components/transactions/transaction-modal.tsx` (grep first, then
+  delete, then run typecheck + lint + tests).
 
-None of these block anything else. There is no other planned work queued.
+## State snapshot
 
-## State snapshot (so you don't have to re-derive it)
-
-- **Git**: `main` is pushed through `6ed6e48`, matches `origin/main` exactly.
-  No worktree, no stash, no uncommitted changes.
-- **Tests**: `npm test` → 134/134. `npm run typecheck`, `npm run lint`,
-  `npm run build` all exit 0.
-- **AI model**: `src/lib/llm.ts` → `google/gemma-4-26b-a4b-it:free` on
-  OpenRouter. Free, not unlimited — expect occasional `429`s. Every AI path
-  except chat has a keyword/rule fallback for exactly that reason; chat now
-  retries up to ~30s before showing a (localized) error.
-- **`.env.local`**: 5 vars only (Supabase URL/anon key, demo email/password,
-  OpenRouter key). No `TOKENROUTER_API_KEY` — it was added then removed
-  during this session and never committed (`.env.local` is gitignored).
-- **Chrome/claude-in-chrome**: connected and used 2026-09-29 to click through
-  all 5 pending UI fixes on production (see above) — all PASS. A second real
-  account (`ferdiputra1404@gmail.com`) now exists on prod for future
-  multi-user testing.
+- **Git**: `main` = `d7dfe88` + one docs commit. Working tree clean.
+- **Tests**: `npm test` → 150/150. `typecheck`, `lint`, `build` all exit 0.
+- **AI**: `src/lib/llm.ts` → `@ai-sdk/google`. `askLLM(prompt, { lite })`
+  picks the model; `modelSettings()` gives 3.5 Flash `thinkingBudget: 0`
+  (its thinking tokens would truncate short JSON replies) and gives Lite no
+  thinking config (it rejects one with 400). Chat uses `google(DEFAULT_MODEL)`
+  + `NO_THINKING` directly.
+- **Env**: `.env.local` has `GOOGLE_GENERATIVE_AI_API_KEY` (a new-style
+  `AQ.…` key, regenerated by the user after the first one was pasted in
+  chat) — also set on Vercel. `OPENROUTER_API_KEY` is still in both, unused.
+- **Accounts on prod**: demo (`demouser@gmail.com`, via "Try the demo") and a
+  second real account (`ferdiputra1404@gmail.com`) for multi-user checks.
+- **Prod live-check trick** (no browser needed): sign in via Supabase
+  `/auth/v1/token?grant_type=password` with the demo creds, send the session
+  as the `sb-<ref>-auth-token` cookie (`base64-` + base64url JSON), then POST
+  to the `/api/ai/*` routes.
 
 ## Full history
 
-For the complete commit-by-commit history, the design rationale behind every
-decision (recurring's non-partial index, draft-then-confirm AI, CSV
-auto-guess, etc.), and the SQL the user already ran, see `progress.md` —
-it's kept current and isn't duplicated here.
+For the commit-by-commit history and the design rationale behind every
+decision, see `progress.md` — it's kept current and isn't duplicated here.
