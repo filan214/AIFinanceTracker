@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
   const today = todayYmd();
   const base = quickParse(parsed.data.text, today);
   try {
-    const raw = await askLLM(buildPrompt(parsed.data.text, today), { maxOutputTokens: 256 });
+    const raw = await askLLM(buildPrompt(parsed.data.text, today), {
+      maxOutputTokens: 256,
+      lite: true,
+    });
     return NextResponse.json({ data: mergeAiDraft(base, extractJson(raw)), ai: true });
   } catch {
     // AI down or misconfigured: the rule-based parse is still useful.

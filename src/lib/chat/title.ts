@@ -21,7 +21,7 @@ export async function generateSessionTitle(
     const langName = language === "en" ? "English" : "Bahasa Indonesia";
     const raw = await askLLM(
       `Summarize this personal-finance question as a short title of 3-5 words, in ${langName}, Title Case, no punctuation, no quotes, no trailing period.\n\nQuestion: "${message}"`,
-      { maxOutputTokens: 20 }
+      { maxOutputTokens: 20, lite: true }
     );
     const clean = raw.replace(/["'\n.]/g, "").trim();
     if (!clean) return fallback;

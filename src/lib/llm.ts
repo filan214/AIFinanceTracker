@@ -5,10 +5,15 @@ export const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
 });
 
-// Google AI Studio free tier: a per-project daily quota that resets at
-// midnight Pacific; over it, calls 429 (never billed). Swap here to change models.
+// Google AI Studio free tier: a small per-project, per-model daily request
+// quota (20/day for 3.5 Flash) that resets at midnight Pacific; over it,
+// calls 429 (never billed). Swap here to change models.
 // (gemini-2.5-flash is closed to new projects; 3.7/3.8 ignore thinkingBudget.)
 export const DEFAULT_MODEL = "gemini-3.5-flash";
+
+// Simple classification/extraction tasks run on Flash-Lite, which has its own
+// separate daily quota — keeping 3.5 Flash's 20/day for chat, receipts, reports.
+export const LITE_MODEL = "gemini-3.5-flash-lite";
 
 // 3.5 Flash "thinks" by default, and thinking tokens count against
 // maxOutputTokens — enough to truncate the short JSON answers these prompts
@@ -17,15 +22,23 @@ export const NO_THINKING = {
   google: { thinkingConfig: { thinkingBudget: 0 } },
 };
 
+// Flash-Lite doesn't think by default and rejects a thinkingConfig (400).
+export function modelSettings(lite: boolean) {
+  return lite
+    ? { modelId: LITE_MODEL, providerOptions: undefined }
+    : { modelId: DEFAULT_MODEL, providerOptions: NO_THINKING };
+}
+
 export async function askLLM(
   prompt: string,
-  opts: { maxOutputTokens?: number } = {}
+  opts: { maxOutputTokens?: number; lite?: boolean } = {}
 ): Promise<string> {
+  const { modelId, providerOptions } = modelSettings(opts.lite ?? false);
   const { text } = await generateText({
-    model: google(DEFAULT_MODEL),
+    model: google(modelId),
     prompt,
     maxOutputTokens: opts.maxOutputTokens ?? 1024,
-    providerOptions: NO_THINKING,
+    providerOptions,
   });
   return text.trim();
 }

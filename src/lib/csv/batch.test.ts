@@ -1,5 +1,39 @@
-import { describe, it, expect } from "vitest";
-import { chunk, parseCategoryBatch, buildCategorizePrompt, fallbackCategories } from "./batch";
+import { describe, it, expect, vi } from "vitest";
+import {
+  chunk,
+  parseCategoryBatch,
+  buildCategorizePrompt,
+  fallbackCategories,
+  categorizeKeywordFirst,
+} from "./batch";
+
+describe("categorizeKeywordFirst", () => {
+  it("doesn't call the AI when every row matches a keyword", async () => {
+    const askBatch = vi.fn();
+    expect(await categorizeKeywordFirst(["KOPI KENANGAN", "GRAB* RIDE"], askBatch)).toEqual([
+      "food",
+      "transport",
+    ]);
+    expect(askBatch).not.toHaveBeenCalled();
+  });
+
+  it("sends only unmatched rows to the AI and merges results back in order", async () => {
+    const askBatch = vi.fn(async (batch: string[]) => batch.map(() => "health" as const));
+    expect(
+      await categorizeKeywordFirst(["TRSF BUDI", "KOPI KENANGAN", "MASKER N95"], askBatch)
+    ).toEqual(["health", "food", "health"]);
+    expect(askBatch).toHaveBeenCalledOnce();
+    expect(askBatch).toHaveBeenCalledWith(["TRSF BUDI", "MASKER N95"]);
+  });
+
+  it("batches unmatched rows by CATEGORIZE_BATCH_SIZE", async () => {
+    const rows = Array.from({ length: 120 }, (_, i) => `TRSF ${i}`);
+    const askBatch = vi.fn(async (batch: string[]) => batch.map(() => "bills" as const));
+    const out = await categorizeKeywordFirst(rows, askBatch);
+    expect(askBatch.mock.calls.map((c) => c[0].length)).toEqual([50, 50, 20]);
+    expect(out).toHaveLength(120);
+  });
+});
 
 describe("chunk", () => {
   it("splits into fixed-size batches", () => {

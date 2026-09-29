@@ -52,7 +52,7 @@ export function buildChatTools(
         const { from, to } = dateRangeForPeriod(period);
         let q = supabase
           .from("transactions")
-          .select("id, amount, type, description, category_key, date")
+          .select("amount, type, description, category_key, date")
           .eq("user_id", userId)
           .gte("date", from)
           .lte("date", to)

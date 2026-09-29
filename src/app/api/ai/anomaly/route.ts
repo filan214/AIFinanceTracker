@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { askLLM } from "@/lib/llm";
-import { weekIndex, filterTriggeredTransactions } from "@/lib/anomaly";
+import {
+  weekIndex,
+  filterTriggeredTransactions,
+  hasSpendingSpike,
+  markNewTransactions,
+} from "@/lib/anomaly";
 import type { AnomalyResult } from "@/types/anomaly";
 
 export async function POST(req: NextRequest) {
@@ -58,50 +63,32 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Nothing rose meaningfully this week: skip the AI call entirely.
+  if (!hasSpendingSpike(weeklyData)) {
+    return NextResponse.json({ detected: false });
+  }
+
   const langName = lang === "en" ? "English" : "Bahasa Indonesia";
 
-  const prompt = `You are a financial anomaly detector for a personal finance app.
+  const prompt = `You detect spending anomalies. Find the ONE most significant one, if any.
 
-Analyze the weekly spending data below and detect ONE most significant anomaly.
-
-Weekly spending by category (last 4 weeks, in IDR; week_0 = this week):
+Weekly spending by category (IDR; week_0 = this week, week_1..3 = previous weeks):
 ${JSON.stringify(weeklyData)}
 
-All transactions this week (id, description, amount in IDR, category_key):
+This week's transactions:
 ${JSON.stringify(thisWeekTransactions)}
 
-Descriptions seen in the previous 3 weeks (used for "isNew" detection):
-${JSON.stringify([...priorDescriptions])}
-
-If you detect an anomaly, respond ONLY with valid JSON in this exact format:
-{
-  "detected": true,
-  "category": "<category_key present in the data>",
-  "categoryLabel": "<human-readable label>",
-  "thisWeek": 327000,
-  "typical": 230000,
-  "percentageChange": 42,
-  "direction": "up",
-  "summary": "Entertainment spending is up 42% this week — well above your 4-week average.",
-  "triggeredTransactions": [
-    { "id": "<id from this week's transactions>", "description": "Netflix", "amount": 65000, "isNew": true }
-  ]
-}
-
-If NO significant anomaly detected, respond ONLY with:
-{ "detected": false }
+If there is an anomaly, return ONLY this JSON:
+{"detected":true,"category":"<category_key from the data>","categoryLabel":"<label>","thisWeek":327000,"typical":230000,"percentageChange":42,"direction":"up","summary":"<one sentence>","triggeredTransactions":[{"id":"<real id>","description":"Netflix","amount":65000}]}
+Otherwise return ONLY: {"detected":false}
 
 Rules:
-- Return ONLY valid JSON — no markdown, no explanation outside the JSON
-- "category" must be one of the category keys present in the data
-- "typical" = average of the 3 previous weeks for that category
-- "isNew" = true if the description is NOT in the previous-3-weeks list above
-- "triggeredTransactions" = max 3 transactions from this week most responsible for the spike; use their real id; every one MUST have category_key equal to "category" — never include a transaction from a different category
-- "summary" must be a single sentence in ${langName}
-- "categoryLabel" must be in ${langName}`;
+- "typical" = average of week_1..3 for that category.
+- "triggeredTransactions": max 3 from this week most responsible; real ids only; each MUST have category_key equal to "category".
+- "summary" and "categoryLabel" in ${langName}.`;
 
   try {
-    const raw = await askLLM(prompt, { maxOutputTokens: 512 });
+    const raw = await askLLM(prompt, { maxOutputTokens: 512, lite: true });
 
     // Strip markdown fences in case the model wraps the JSON.
     const clean = raw.replace(/```json|```/g, "").trim();
@@ -112,10 +99,10 @@ Rules:
     }
 
     // Defense in depth: never trust the model to have filtered these itself.
-    result.triggeredTransactions = filterTriggeredTransactions(
-      result.triggeredTransactions,
-      result.category,
-      txns
+    result.triggeredTransactions = markNewTransactions(
+      filterTriggeredTransactions(result.triggeredTransactions ?? [], result.category, txns),
+      txns,
+      priorDescriptions
     );
 
     await supabase.from("ai_insights").insert({

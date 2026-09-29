@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { askLLM } from "@/lib/llm";
-import { guessCategory } from "@/lib/category-rules";
+import { categorizeExpense } from "@/lib/categorize";
 
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabase();
@@ -23,40 +23,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ category_key: "income" });
   }
 
-  const prompt = `You are a financial transaction categorizer.
-Categories:
-- food: meals, drinks, groceries, restaurants, cafes, snacks
-- transport: fuel, gojek, grab, taxi, parking, tolls, public transit
-- entertainment: movies, streaming subscriptions (netflix, spotify), concerts, games
-- shopping: clothes, shoes, electronics, home goods, accessories
-- bills: utilities (electricity, water, gas), internet, phone, rent, insurance
-- health: medicine, doctor, hospital, gym, supplements
-- education: courses, books, tuition, training
-- savings: transfers to savings, investments
-- income: salary, freelance income, refunds
-
-Transaction description: "${description}"
-
-Reply with EXACTLY ONE word — the category key. No quotes, no punctuation, no explanation.`;
-
-  // AI down, rate-limited, or unusable reply: keyword rules, then shopping.
-  const fallback = () => guessCategory(String(description ?? "")) ?? "shopping";
-
-  async function categorize(): Promise<string> {
-    try {
-      const raw = await askLLM(prompt, { maxOutputTokens: 16 });
-      const normalized = raw.toLowerCase();
-      // No "income" here: this branch only runs for expenses.
-      const match = normalized.match(
-        /\b(food|transport|entertainment|shopping|bills|health|education|savings)\b/
-      );
-      return match ? match[1] : fallback();
-    } catch {
-      return fallback();
-    }
-  }
-
-  const category_key = await categorize();
+  const category_key = await categorizeExpense(String(description ?? ""), (prompt) =>
+    askLLM(prompt, { maxOutputTokens: 16, lite: true })
+  );
 
   if (transactionId) {
     await supabase

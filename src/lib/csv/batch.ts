@@ -20,6 +20,19 @@ Input:
 ${JSON.stringify(descriptions)}`;
 }
 
+// Keyword rules first; only rows they don't recognize go to the AI, batched.
+// askBatch must resolve (it owns its own fallback) to one key per input row.
+export async function categorizeKeywordFirst(
+  descriptions: string[],
+  askBatch: (batch: string[]) => Promise<ExpenseCategoryKey[]>
+): Promise<ExpenseCategoryKey[]> {
+  const out = descriptions.map((d) => guessCategory(d));
+  const unknown = descriptions.filter((_, i) => out[i] === null);
+  const answers = (await Promise.all(chunk(unknown, CATEGORIZE_BATCH_SIZE).map((b) => askBatch(b)))).flat();
+  let a = 0;
+  return out.map((c) => c ?? answers[a++]);
+}
+
 // Used when the AI is unavailable or its answer for a row is unusable.
 export function fallbackCategories(descriptions: string[]): ExpenseCategoryKey[] {
   return descriptions.map((d) => guessCategory(d) ?? "shopping");

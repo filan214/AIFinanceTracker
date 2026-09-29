@@ -1,5 +1,80 @@
 import { describe, it, expect } from "vitest";
-import { weekIndex, filterTriggeredTransactions } from "./anomaly";
+import {
+  weekIndex,
+  filterTriggeredTransactions,
+  hasSpendingSpike,
+  markNewTransactions,
+} from "./anomaly";
+
+describe("hasSpendingSpike", () => {
+  it("is false when no category rose more than 20% over its 3-week average", () => {
+    expect(
+      hasSpendingSpike({
+        week_0: { food: 110000, transport: 50000 },
+        week_1: { food: 100000, transport: 60000 },
+        week_2: { food: 100000, transport: 50000 },
+        week_3: { food: 100000, transport: 40000 },
+      })
+    ).toBe(false);
+  });
+
+  it("is true when a category rose more than 20% over its 3-week average", () => {
+    expect(
+      hasSpendingSpike({
+        week_0: { entertainment: 327000 },
+        week_1: { entertainment: 230000 },
+        week_2: { entertainment: 230000 },
+        week_3: { entertainment: 230000 },
+      })
+    ).toBe(true);
+  });
+
+  it("counts a missing week as zero spend in the average", () => {
+    // typical = (100000 + 0 + 0) / 3 ≈ 33333, so 50000 is a spike.
+    expect(hasSpendingSpike({ week_0: { food: 50000 }, week_1: { food: 100000 } })).toBe(true);
+  });
+
+  it("treats spend in a category never seen before as a spike", () => {
+    expect(
+      hasSpendingSpike({ week_0: { health: 20000 }, week_1: { food: 100000 } })
+    ).toBe(true);
+  });
+
+  it("is false when there's no spending this week", () => {
+    expect(hasSpendingSpike({ week_1: { food: 100000 } })).toBe(false);
+  });
+});
+
+describe("markNewTransactions", () => {
+  it("sets isNew from the stored description, not the model's copy", () => {
+    const txns = [
+      { id: "1", description: "Netflix" },
+      { id: "2", description: "Kopi" },
+    ];
+    expect(
+      markNewTransactions(
+        [
+          { id: "1", description: "netflix sub", amount: 65000, isNew: false },
+          { id: "2", description: "Kopi", amount: 20000, isNew: true },
+        ],
+        txns,
+        new Set(["Kopi"])
+      )
+    ).toEqual([
+      { id: "1", description: "netflix sub", amount: 65000, isNew: true },
+      { id: "2", description: "Kopi", amount: 20000, isNew: false },
+    ]);
+  });
+
+  it("tolerates a model reply without isNew", () => {
+    const out = markNewTransactions(
+      [{ id: "1", description: "Netflix", amount: 65000 } as never],
+      [{ id: "1", description: "Netflix" }],
+      new Set()
+    );
+    expect(out[0].isNew).toBe(true);
+  });
+});
 
 // Fixed reference point so the math is deterministic regardless of when tests run.
 const now = new Date("2026-07-04T12:00:00Z");

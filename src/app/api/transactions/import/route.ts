@@ -5,9 +5,8 @@ import { askLLM } from "@/lib/llm";
 import { isValidYmd } from "@/lib/ymd";
 import type { ExpenseCategoryKey } from "@/lib/draft";
 import {
-  CATEGORIZE_BATCH_SIZE,
   buildCategorizePrompt,
-  chunk,
+  categorizeKeywordFirst,
   fallbackCategories,
   parseCategoryBatch,
 } from "@/lib/csv/batch";
@@ -32,19 +31,20 @@ export async function POST(req: NextRequest) {
   const { rows } = parsed.data;
 
   const expenses = rows.filter((r) => r.type === "expense");
-  const batches = chunk(expenses, CATEGORIZE_BATCH_SIZE);
-  const results = await Promise.all(
-    batches.map(async (batch): Promise<ExpenseCategoryKey[]> => {
-      const descriptions = batch.map((r) => r.description);
+  const categories = await categorizeKeywordFirst(
+    expenses.map((r) => r.description),
+    async (descriptions): Promise<ExpenseCategoryKey[]> => {
       try {
-        const raw = await askLLM(buildCategorizePrompt(descriptions), { maxOutputTokens: 1024 });
+        const raw = await askLLM(buildCategorizePrompt(descriptions), {
+          maxOutputTokens: 1024,
+          lite: true,
+        });
         return parseCategoryBatch(raw, descriptions);
       } catch {
         return fallbackCategories(descriptions);
       }
-    })
+    }
   );
-  const categories = results.flat();
 
   let e = 0;
   const inserts = rows.map((r) => ({
