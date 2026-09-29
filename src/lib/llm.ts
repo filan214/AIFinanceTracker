@@ -1,30 +1,36 @@
 import { generateText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-export const openrouter = createOpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY || "",
+export const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || "",
 });
 
-// Free tier: OpenRouter has no free gemini-2.5-flash slug, so this avoids
-// billing against account credits. Rate-limited per-account and may change
-// without notice — swap here if OpenRouter drops or replaces it.
-export const DEFAULT_MODEL = "google/gemma-4-26b-a4b-it:free";
+// Google AI Studio free tier: a per-project daily quota that resets at
+// midnight Pacific; over it, calls 429 (never billed). Swap here to change models.
+// (gemini-2.5-flash is closed to new projects; 3.7/3.8 ignore thinkingBudget.)
+export const DEFAULT_MODEL = "gemini-3.5-flash";
+
+// 3.5 Flash "thinks" by default, and thinking tokens count against
+// maxOutputTokens — enough to truncate the short JSON answers these prompts
+// expect (e.g. categorize's 16 tokens). None of our tasks need it; turn it off.
+export const NO_THINKING = {
+  google: { thinkingConfig: { thinkingBudget: 0 } },
+};
 
 export async function askLLM(
   prompt: string,
   opts: { maxOutputTokens?: number } = {}
 ): Promise<string> {
   const { text } = await generateText({
-    model: openrouter(DEFAULT_MODEL),
+    model: google(DEFAULT_MODEL),
     prompt,
     maxOutputTokens: opts.maxOutputTokens ?? 1024,
+    providerOptions: NO_THINKING,
   });
   return text.trim();
 }
 
-// Multimodal prompt (text + one image). Uses the Chat Completions endpoint,
-// which is OpenRouter's primary API and accepts base64 images.
+// Multimodal prompt (text + one image, base64 data URL).
 export async function askLLMWithImage(
   prompt: string,
   imageDataUrl: string,
@@ -33,7 +39,7 @@ export async function askLLMWithImage(
   const comma = imageDataUrl.indexOf(",");
   const mediaType = imageDataUrl.slice(5, imageDataUrl.indexOf(";")); // "data:<type>;base64,"
   const { text } = await generateText({
-    model: openrouter.chat(DEFAULT_MODEL),
+    model: google(DEFAULT_MODEL),
     messages: [
       {
         role: "user",
@@ -44,6 +50,7 @@ export async function askLLMWithImage(
       },
     ],
     maxOutputTokens: opts.maxOutputTokens ?? 512,
+    providerOptions: NO_THINKING,
   });
   return text.trim();
 }

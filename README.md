@@ -59,7 +59,7 @@ flowchart LR
     end
     subgraph Ext["☁️ External Services"]
         SB[("Supabase<br/>Postgres + Auth + RLS")]
-        OR["OpenRouter<br/>→ Gemini 2.5 Flash"]
+        OR["Google AI Studio<br/>→ Gemini 3.5 Flash"]
     end
 
     UI -->|fetch / SSE| API
@@ -170,7 +170,7 @@ erDiagram
 | **Language** | TypeScript | End-to-end type safety. |
 | **Styling** | Tailwind CSS (class dark mode) | Fast, consistent, theme-aware. |
 | **Database & Auth** | Supabase (Postgres + RLS) | One service for data, auth, and row-level security. |
-| **AI** | Vercel AI SDK (`ai`) + OpenRouter → `google/gemini-2.5-flash` | Tool-calling + streaming; model is swappable in one line. |
+| **AI** | Vercel AI SDK (`ai`) + `@ai-sdk/google` → `gemini-3.5-flash` (free tier) | Tool-calling + streaming; model is swappable in one line. |
 | **Validation** | Zod | Tool input schemas the model must satisfy. |
 | **Charts** | Recharts | Dashboard trend + donut. |
 | **i18n** | next-intl | Bilingual 🇮🇩 / 🇬🇧. |
@@ -218,7 +218,7 @@ src/
 ├── lib/
 │   ├── ai/                    # tools.ts · prompts.ts
 │   ├── supabase/              # client · server · middleware
-│   ├── llm.ts                 # OpenRouter config + DEFAULT_MODEL
+│   ├── llm.ts                 # Gemini config + DEFAULT_MODEL
 │   └── format.ts              # Rupiah / percent formatting
 ├── i18n/                      # Locale provider
 └── messages/                  # en.json · id.json
@@ -235,7 +235,7 @@ supabase/
 ### Prerequisites
 - Node.js 18+
 - A [Supabase](https://supabase.com) project (free tier is fine)
-- An [OpenRouter](https://openrouter.ai) API key
+- A [Google AI Studio](https://aistudio.google.com) API key (free tier is enough)
 
 ### 1. Install
 
@@ -252,7 +252,7 @@ Create `.env.local` in the project root:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-OPENROUTER_API_KEY=your-openrouter-key
+GOOGLE_GENERATIVE_AI_API_KEY=your-google-ai-studio-key
 
 # Optional — enables a one-click "Try the demo" button on the login page.
 # Point these at a dedicated, throwaway, email-confirmed demo account
@@ -296,7 +296,7 @@ Open <http://localhost:3000>, register an account, and start asking your money q
 - **The database is the security boundary.** RLS policies (`auth.uid() = user_id`) mean the AI's tools query the DB *as the user* — a bug in tool code can't leak another user's transactions.
 - **Charts survive reloads.** Assistant messages persist their structured `parts` (`jsonb`), so reopening a chat re-renders the exact charts, not just text.
 - **Timezone-correct dates.** "This month" / "last month" are computed against `Asia/Jakarta`, independent of where the app is deployed.
-- **Model-agnostic AI.** Everything routes through OpenRouter via one `DEFAULT_MODEL` constant in [`src/lib/llm.ts`](src/lib/llm.ts) — swap Gemini for any other model without touching feature code.
+- **Model-agnostic AI.** Every AI call goes through one `DEFAULT_MODEL` constant in [`src/lib/llm.ts`](src/lib/llm.ts) — swap Gemini for any other model without touching feature code.
 - **Free-tier friendly.** A GitHub Actions [keep-alive workflow](.github/workflows/keep-alive.yml) pings Supabase every 5 days so the project never pauses from inactivity.
 
 ---

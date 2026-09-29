@@ -3,7 +3,7 @@ import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 
 import { createServerSupabase } from "@/lib/supabase/server";
 import { buildChatTools } from "@/lib/ai/tools";
 import { buildChatSystemPrompt } from "@/lib/ai/prompts";
-import { openrouter, DEFAULT_MODEL } from "@/lib/llm";
+import { google, DEFAULT_MODEL, NO_THINKING } from "@/lib/llm";
 
 export async function POST(req: Request) {
   const supabase = await createServerSupabase();
@@ -14,9 +14,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return NextResponse.json(
-      { error: "OPENROUTER_API_KEY is not configured." },
+      { error: "GOOGLE_GENERATIVE_AI_API_KEY is not configured." },
       { status: 500 }
     );
   }
@@ -46,14 +46,15 @@ export async function POST(req: Request) {
   const tools = buildChatTools(supabase, user.id);
 
   const result = streamText({
-    model: openrouter(DEFAULT_MODEL),
+    model: google(DEFAULT_MODEL),
     system: buildChatSystemPrompt(language, new Date().getFullYear()),
     messages: await convertToModelMessages(body.messages),
     tools,
     stopWhen: stepCountIs(5),
     maxOutputTokens: 2048,
-    // The free model's shared pool 429s under load; the AI SDK's default of
-    // 2 retries (2s, 4s backoff) often isn't enough to clear it. 4 retries
+    providerOptions: NO_THINKING,
+    // The free tier's per-minute limit 429s on bursts (tool steps add calls);
+    // the AI SDK's default of 2 retries (2s, 4s backoff) often isn't enough. 4 retries
     // (2s/4s/8s/16s, ~30s worst case) gives it a real chance before failing.
     maxRetries: 4,
   });
