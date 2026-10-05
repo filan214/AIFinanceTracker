@@ -81,7 +81,12 @@ export default function LandingPage() {
                     {t("heroSecondary")}
                   </Button>
                 </Link>
-                <DemoLoginButton variant="ghost" size="lg" />
+                {/* Text-style so it lines up with the buttons above when it wraps. */}
+                <DemoLoginButton
+                  variant="ghost"
+                  size="lg"
+                  className="px-1 underline-offset-4 hover:bg-transparent hover:underline dark:hover:bg-transparent"
+                />
               </div>
             </div>
 

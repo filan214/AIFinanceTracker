@@ -1,8 +1,9 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 
 export function ThemeToggle({
@@ -13,15 +14,17 @@ export function ThemeToggle({
   variant?: "inline" | "segmented";
 }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const tCommon = useTranslations("common");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const isDark = mounted && (theme === "dark" || (theme === "system" && resolvedTheme === "dark"));
 
   if (variant === "segmented") {
-    const options: { value: string; icon: typeof Sun }[] = [
+    const options: { value: "light" | "dark" | "system"; icon: typeof Sun }[] = [
       { value: "light", icon: Sun },
       { value: "dark", icon: Moon },
+      { value: "system", icon: Monitor },
     ];
     return (
       <div
@@ -31,19 +34,22 @@ export function ThemeToggle({
         )}
       >
         {options.map(({ value, icon: Icon }) => {
-          const active = mounted && (theme === value || (theme === "system" && resolvedTheme === value));
+          // next-themes reports an unset preference as "system".
+          const active = mounted && (theme ?? "system") === value;
           return (
             <button
               key={value}
               type="button"
               onClick={() => setTheme(value)}
               className={cn(
-                "rounded-md p-1.5 transition-colors",
+                "flex items-center justify-center rounded-md p-1.5 transition-colors [@media(hover:none)]:min-h-11 [@media(hover:none)]:min-w-11",
                 active
                   ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200"
+                  : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
               )}
-              aria-label={`Theme: ${value}`}
+              aria-label={tCommon(value)}
+              title={tCommon(value)}
+              aria-pressed={active}
             >
               <Icon className="h-3.5 w-3.5" />
             </button>

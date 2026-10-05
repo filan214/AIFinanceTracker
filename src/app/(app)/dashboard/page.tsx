@@ -265,13 +265,16 @@ export default function DashboardPage() {
             <Button
               variant="secondary"
               size="sm"
+              className="[@media(hover:none)]:min-w-11"
+              aria-label={locale === "id" ? "Ekspor" : "Export"}
+              title={locale === "id" ? "Ekspor CSV" : "Export CSV"}
               onClick={async () => {
                 const res = await fetchTransactions({ month: monthKey, limit: 500 });
                 exportTransactionsCsv(res.data, `transactions-${monthKey}.csv`);
               }}
             >
               <Download className="h-3.5 w-3.5" />
-              {locale === "id" ? "Ekspor" : "Export"}
+              <span className="hidden sm:inline">{locale === "id" ? "Ekspor" : "Export"}</span>
             </Button>
             <Button size="sm" onClick={() => setModalOpen(true)}>
               <Plus className="h-3.5 w-3.5" />

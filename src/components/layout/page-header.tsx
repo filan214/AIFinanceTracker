@@ -27,10 +27,7 @@ export function PageHeader({
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           {liveBadge && (
             <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-              <span className="relative flex h-[5px] w-[5px]">
-                <span className="absolute inline-flex h-full w-full animate-pulse-dot rounded-full bg-emerald-500" />
-                <span className="relative inline-flex h-[5px] w-[5px] rounded-full bg-emerald-500" />
-              </span>
+              <span className="inline-flex h-[5px] w-[5px] rounded-full bg-emerald-500" />
               Live
             </span>
           )}
