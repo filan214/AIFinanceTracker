@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable, { type UserOptions } from "jspdf-autotable";
 import type { Locale } from "@/i18n/locale-provider";
-import { formatCurrency, formatCompactCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatCompactCurrency, formatDate, formatNetCurrency } from "@/lib/format";
 import type { ReportData, AIReportContent } from "@/types/report";
 
 type Translate = (key: string) => string;
@@ -25,9 +25,31 @@ function clean(s: string): string {
     .replace(/ /g, " ")
     .replace(/[‘’]/g, "'")
     .replace(/[“”]/g, '"')
-    .replace(/[–—]/g, "-")
+    .replace(/[–—−]/g, "-")
     .trim();
 }
+
+type Column = { header: string; align?: "left" | "right"; width?: number };
+
+// autoTable's columnStyles only reach body cells, so right-aligned amounts
+// sat under left-aligned headings. One spec per column now drives the header
+// cell and the body cells alike; a fixed width keeps number columns compact
+// and lets the label column take the rest.
+export function columnLayout(cols: Column[]) {
+  return {
+    head: [cols.map((c) => ({ content: c.header, styles: { halign: c.align ?? "left" } }))],
+    columnStyles: Object.fromEntries(
+      cols.map((c, i) => [i, { halign: c.align ?? "left", ...(c.width ? { cellWidth: c.width } : {}) }])
+    ) as Record<string, { halign: "left" | "right"; cellWidth?: number }>,
+  };
+}
+
+// Shared look for the striped data tables.
+const STRIPED: Required<Pick<UserOptions, "styles" | "headStyles" | "alternateRowStyles">> = {
+  styles: { font: "helvetica", fontSize: 9, cellPadding: 2.4, valign: "middle", textColor: [...INK] },
+  headStyles: { fillColor: [...INK], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+  alternateRowStyles: { fillColor: [...ZEBRA] },
+};
 
 export type ReportPdfOptions = {
   data: ReportData;
@@ -67,9 +89,10 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
     }
   }
 
-  // Section heading + short accent underline.
+  // Section heading + short accent underline. Keeps room for the table's
+  // header row and first data row so a heading never ends a page alone.
   function heading(text: string) {
-    ensure(14);
+    ensure(28);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     txt(INK);
@@ -128,7 +151,7 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
   const cells = [
     { label: t("totalSpent"), value: money(m.totalSpent), sub: m.spentChange ? `${pct(m.spentChange)} ${t("vsLastMonth")}` : "" },
     { label: t("totalIncome"), value: money(m.totalIncome), sub: m.incomeChange ? `${pct(m.incomeChange)} ${t("vsLastMonth")}` : "" },
-    { label: t("saved"), value: money(m.saved), sub: "" },
+    { label: t("saved"), value: clean(formatNetCurrency(m.saved, locale)), sub: "", deficit: m.saved < 0 },
     {
       label: t("savingsRate"),
       value: `${m.savingsRate}%`,
@@ -142,7 +165,7 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
     },
   ];
   const cellW = contentW / 2;
-  const cellH = 22;
+  const cellH = 25; // 21mm card + 4mm gap; the sub-line no longer touches the border
   cells.forEach((c, i) => {
     const cx = margin + (i % 2) * cellW;
     const cy = y + Math.floor(i / 2) * cellH;
@@ -155,13 +178,13 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
     doc.text(clean(c.label).toUpperCase(), cx + 4, cy + 6);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    txt(INK);
-    doc.text(c.value, cx + 4, cy + 12.5);
+    txt("deficit" in c && c.deficit ? ROSE : INK);
+    doc.text(c.value, cx + 4, cy + 13);
     if (c.sub) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7.5);
       txt(MUTED);
-      doc.text(clean(c.sub), cx + 4, cy + 16.5);
+      doc.text(clean(c.sub), cx + 4, cy + 17.5);
     }
   });
   y += Math.ceil(cells.length / 2) * cellH + 4;
@@ -186,16 +209,17 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [[L("Kategori", "Category"), L("Jumlah", "Amount"), t("vsLastMonth")]],
+      ...STRIPED,
+      ...columnLayout([
+        { header: L("Kategori", "Category") },
+        { header: L("Jumlah", "Amount"), align: "right", width: 42 },
+        { header: t("vsLastMonth"), align: "right", width: 34 },
+      ]),
       body: data.categoryBreakdown.map((c) => [
         catLabel(c.categoryKey),
         money(c.total),
         c.vsLastMonth === 0 ? "-" : pct(c.vsLastMonth),
       ]),
-      styles: { font: "helvetica", fontSize: 9, cellPadding: 2.2, textColor: [...INK] },
-      headStyles: { fillColor: [...INK], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
-      alternateRowStyles: { fillColor: [...ZEBRA] },
-      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
     });
     afterTable();
   }
@@ -206,17 +230,19 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [[L("Kategori", "Category"), L("Bln lalu", "Prev"), L("Bln ini", "This"), L("Perubahan", "Change")]],
+      ...STRIPED,
+      ...columnLayout([
+        { header: L("Kategori", "Category") },
+        { header: L("Bln lalu", "Prev"), align: "right", width: 30 },
+        { header: L("Bln ini", "This"), align: "right", width: 30 },
+        { header: L("Perubahan", "Change"), align: "right", width: 46 },
+      ]),
       body: data.biggestMovers.map((mv) => [
         catLabel(mv.categoryKey),
         compact(mv.previousMonth),
         compact(mv.thisMonth),
         `${pct(mv.changePercent)} (${mv.direction === "up" ? "+" : "-"}${compact(mv.changeAbsolute)})`,
       ]),
-      styles: { font: "helvetica", fontSize: 9, cellPadding: 2.2, textColor: [...INK] },
-      headStyles: { fillColor: [...INK], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
-      alternateRowStyles: { fillColor: [...ZEBRA] },
-      columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" } },
       didParseCell: (d) => {
         if (d.section === "body" && d.column.index === 3) {
           const up = data.biggestMovers[d.row.index].direction === "up";
@@ -240,12 +266,12 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [[L("Bulan", "Month"), t("totalSpent")]],
+      ...STRIPED,
+      ...columnLayout([
+        { header: L("Bulan", "Month") },
+        { header: t("totalSpent"), align: "right", width: 42 },
+      ]),
       body: data.monthlyTrend.map((p) => [monthShort(p.month), money(p.totalSpent)]),
-      styles: { font: "helvetica", fontSize: 9, cellPadding: 2.2, textColor: [...INK] },
-      headStyles: { fillColor: [...INK], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
-      alternateRowStyles: { fillColor: [...ZEBRA] },
-      columnStyles: { 1: { halign: "right" } },
     });
     afterTable();
   }
@@ -281,7 +307,7 @@ export function buildReportDoc(opts: ReportPdfOptions): jsPDF {
     startY: y,
     margin: { left: margin, right: margin },
     body: highlightRows.map(([k, v]) => [k, v]),
-    styles: { font: "helvetica", fontSize: 9, cellPadding: 2.2, textColor: [...INK] },
+    styles: STRIPED.styles,
     columnStyles: {
       0: { fontStyle: "bold", cellWidth: 45, textColor: [...MUTED] },
       1: { textColor: [...INK] },

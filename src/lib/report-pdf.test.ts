@@ -1,5 +1,25 @@
 import { describe, it, expect } from "vitest";
-import { buildReportDoc, type ReportPdfOptions } from "./report-pdf";
+import { buildReportDoc, columnLayout, type ReportPdfOptions } from "./report-pdf";
+
+describe("columnLayout", () => {
+  it("aligns each header cell with its column, not just the body", () => {
+    const layout = columnLayout([
+      { header: "Category" },
+      { header: "Amount", align: "right", width: 40 },
+    ]);
+    expect(layout.head[0][0]).toEqual({ content: "Category", styles: { halign: "left" } });
+    expect(layout.head[0][1]).toEqual({ content: "Amount", styles: { halign: "right" } });
+  });
+
+  it("gives body cells the same alignment and a fixed width when set", () => {
+    const layout = columnLayout([
+      { header: "Category" },
+      { header: "Amount", align: "right", width: 40 },
+    ]);
+    expect(layout.columnStyles[0]).toEqual({ halign: "left" });
+    expect(layout.columnStyles[1]).toEqual({ halign: "right", cellWidth: 40 });
+  });
+});
 import type { ReportData, AIReportContent } from "@/types/report";
 
 const data: ReportData = {
@@ -77,6 +97,16 @@ describe("buildReportDoc", () => {
     const doc = buildReportDoc(base);
     expect(pdfMagic(doc)).toBe("%PDF-");
     expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+  });
+
+  it("keeps the minus on a negative Saved amount (a deficit is not savings)", () => {
+    const doc = buildReportDoc({
+      ...base,
+      locale: "id",
+      data: { ...data, metrics: { ...data.metrics, totalIncome: 0, saved: -918977, savingsRate: 0 } },
+    });
+    const pdf = doc.output();
+    expect(pdf).toContain("(-Rp 918.977)");
   });
 
   it("handles a report with no AI content", () => {
