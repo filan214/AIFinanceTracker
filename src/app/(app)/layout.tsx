@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AccentInit />
       <RecurringRunner />
       <Sidebar />
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <MobileHeader />
         <main className="flex-1 px-4 pb-24 pt-6 sm:px-8 lg:pb-10">
           {children}

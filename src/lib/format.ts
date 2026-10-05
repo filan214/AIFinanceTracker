@@ -26,6 +26,12 @@ export function formatCompactCurrency(
   return `Rp\u00a0${formatted}`;
 }
 
+// For net figures (balance, saved) that can go below zero: a deficit keeps its
+// minus (U+2212, as in transaction rows), a surplus or zero shows no sign.
+export function formatNetCurrency(amount: number, locale: Locale = "id"): string {
+  return `${amount < 0 ? "−" : ""}${formatCurrency(amount, locale)}`;
+}
+
 export function formatSignedCurrency(
   amount: number,
   locale: Locale = "id"

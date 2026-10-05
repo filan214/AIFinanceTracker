@@ -36,8 +36,9 @@ import {
   exportTransactionsCsv,
   type ApiTransaction,
 } from "@/lib/api";
-import { ANOMALY_CACHE_KEY } from "@/lib/anomaly-cache";
+import { ANOMALY_CACHE_KEY, anomalyAlertsEnabled } from "@/lib/anomaly-cache";
 import { TRANSACTIONS_CHANGED } from "@/lib/events";
+import { summarizeMonth } from "@/lib/month-summary";
 import type { CategoryKey } from "@/lib/mock-data";
 import type { AnomalyResult } from "@/types/anomaly";
 
@@ -160,6 +161,11 @@ export default function DashboardPage() {
   // Fetch the structured anomaly once per day (cached in sessionStorage).
   useEffect(() => {
     let cancelled = false;
+    // Turned off in Settings: no alert, and no detection request either.
+    if (!anomalyAlertsEnabled()) {
+      setAnomaly(null);
+      return;
+    }
     const today = new Date().toISOString().slice(0, 10);
 
     try {
@@ -308,7 +314,6 @@ export default function DashboardPage() {
           icon={Wallet}
           label={t("balance")}
           amount={current.balance}
-          changePercent={0}
           emphasis="primary"
           income={current.income}
           expense={current.expense}
@@ -317,7 +322,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-3.5 sm:[grid-template-columns:1.05fr_1.4fr]">
         <CategoryDonut data={current.byCategory} />
-        <DailyLine data={current.dailyTotals} />
+        <DailyLine data={current.dailyTotals} monthKey={monthKey} />
       </div>
 
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
@@ -325,7 +330,10 @@ export default function DashboardPage() {
         <GoalCard refreshKey={dataVersion} />
       </div>
 
-      <InsightCard />
+      <InsightCard
+        summary={summarizeMonth(current, previous)}
+        monthLabel={`${monthLabel} ${year}`}
+      />
 
       <div className="animate-slide-up overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[var(--shadow-sm)] dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3.5 dark:border-zinc-800">

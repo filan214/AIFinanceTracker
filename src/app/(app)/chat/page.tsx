@@ -216,7 +216,7 @@ export default function ChatPage() {
             >
               <History className="h-4 w-4" />
             </button>
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600 text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--accent-solid)] text-white">
               <Sparkles className="h-3.5 w-3.5" />
             </div>
             <span className="text-sm font-semibold">{t("aiLabel")}</span>
@@ -373,7 +373,7 @@ function ToolIndicator({ label, running }: { label: string; running: boolean }) 
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[color:var(--accent-solid)] text-white">
         <Sparkles className="h-3.5 w-3.5" />
       </div>
       <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm bg-zinc-100 px-4 py-2.5 dark:bg-zinc-800">

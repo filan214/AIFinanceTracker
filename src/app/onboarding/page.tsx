@@ -53,7 +53,7 @@ export default function OnboardingPage() {
                   className={cn(
                     "flex h-5 w-5 items-center justify-center rounded-full border",
                     active
-                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      ? "border-[color:var(--accent-solid)] bg-[color:var(--accent-solid)] text-white"
                       : "border-zinc-300 dark:border-zinc-700"
                   )}
                 >

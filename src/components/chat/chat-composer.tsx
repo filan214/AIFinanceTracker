@@ -107,7 +107,7 @@ export function ChatComposer({
           type="button"
           onClick={submit}
           disabled={!value.trim() || disabled}
-          className="mb-0.5 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500"
+          className="mb-0.5 inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-[color:var(--accent-solid)] px-3 text-sm font-medium text-white transition-colors hover:brightness-90 disabled:bg-zinc-200 disabled:hover:brightness-100 [@media(hover:none)]:h-11 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500"
         >
           <Send className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">{t("send")}</span>

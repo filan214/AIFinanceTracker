@@ -3,7 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/i18n/locale-provider";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatCurrency, formatNetCurrency, formatPercent } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
 export function MetricCard({
@@ -43,9 +43,29 @@ export function MetricCard({
     ? "text-emerald-600 dark:text-emerald-400"
     : "text-rose-500 dark:text-rose-400";
 
-  if (emphasis === "primary" && income && expense) {
-    const ratio = expense / income;
-    const healthy = ratio < 0.8;
+  if (emphasis === "primary") {
+    const inc = income ?? 0;
+    const exp = expense ?? 0;
+    // Share of income already spent; null when no income was recorded.
+    const ratio = inc > 0 ? exp / inc : null;
+    const state =
+      ratio === null ? (exp > 0 ? "over" : "ok") : ratio < 0.8 ? "ok" : ratio <= 1 ? "warn" : "over";
+    const badge = {
+      ok: {
+        label: locale === "id" ? "Sehat" : "Healthy",
+        className: "bg-emerald-400/15 text-emerald-300",
+      },
+      warn: {
+        label: locale === "id" ? "Perhatian" : "Warning",
+        className: "bg-amber-400/15 text-amber-300",
+      },
+      over: {
+        label: locale === "id" ? "Defisit" : "Deficit",
+        className: "bg-rose-400/15 text-rose-300",
+      },
+    }[state];
+    const barClass = { ok: "bg-emerald-500", warn: "bg-amber-400", over: "bg-rose-400" }[state];
+    const barWidth = ratio === null ? (exp > 0 ? 100 : 0) : Math.min(ratio * 100, 100);
     return (
       <div className="animate-slide-up relative overflow-hidden rounded-xl bg-zinc-900 p-5 text-white dark:bg-zinc-800">
         <div>
@@ -53,32 +73,33 @@ export function MetricCard({
             <span className="text-[10px] font-medium uppercase tracking-wider text-white/55">
               {label}
             </span>
-            <span className="rounded-[5px] bg-emerald-500 px-2 py-0.5 text-[10px] font-medium text-white">
-              {healthy
-                ? locale === "id"
-                  ? "Sehat"
-                  : "Healthy"
-                : locale === "id"
-                  ? "Perhatian"
-                  : "Warning"}
+            <span className={cn("rounded-[5px] px-2 py-0.5 text-[10px] font-medium", badge.className)}>
+              {badge.label}
             </span>
           </div>
-          <div className="font-mono text-[32px] font-semibold leading-tight tracking-tight">
-            {formatCurrency(amount, locale)}
+          <div
+            className={cn(
+              "font-mono text-[32px] font-semibold leading-tight tracking-tight",
+              amount < 0 && "text-rose-300"
+            )}
+          >
+            {formatNetCurrency(amount, locale)}
           </div>
-          <div className="mt-1.5 text-xs text-white/55">
-            {t("availableToSave")}
+          <div className="mt-1.5 text-xs text-white/60">
+            {amount < 0 ? t("balanceNegative") : t("availableToSave")}
           </div>
         </div>
         <div className="mt-4">
-          <div className="mb-1.5 flex items-center justify-between text-[10px] font-medium uppercase tracking-wider text-white/45">
+          <div className="mb-1.5 flex items-center justify-between text-[10px] font-medium uppercase tracking-wider text-white/60">
             <span>{locale === "id" ? "Pengeluaran" : "Spent"}</span>
-            <span className="font-mono">{(ratio * 100).toFixed(0)}%</span>
+            <span className="font-mono normal-case tracking-normal">
+              {ratio === null ? t("noIncome") : `${(ratio * 100).toFixed(0)}%`}
+            </span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-emerald-500 transition-all duration-1000 ease-out"
-              style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+              className={cn("h-full rounded-full transition-all duration-1000 ease-out", barClass)}
+              style={{ width: `${barWidth}%` }}
             />
           </div>
         </div>

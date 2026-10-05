@@ -37,7 +37,7 @@ export function ChatBubble({
       )}
     >
       {isAi && (
-        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[color:var(--accent-solid)] text-white">
           <Sparkles className="h-3.5 w-3.5" />
         </div>
       )}
@@ -52,7 +52,7 @@ export function ChatBubble({
               ? "rounded-xl rounded-tl-none border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-300"
               : isAi
                 ? "rounded-xl rounded-tl-none bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                : "rounded-xl rounded-tr-none bg-emerald-600 text-white"
+                : "rounded-xl rounded-tr-none bg-[color:var(--accent-solid)] text-white"
           )}
         >
           {isAi ? renderBold(content) : content}

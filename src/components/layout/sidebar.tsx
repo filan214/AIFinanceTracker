@@ -151,7 +151,7 @@ export function Sidebar() {
                   : "border border-transparent text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
               )}
             >
-              <Icon className="h-[15px] w-[15px]" />
+              <Icon className={cn("h-[15px] w-[15px]", active && "text-[color:var(--accent-fg)]")} />
               <span className="flex-1">{t(labelKey)}</span>
               {badge && (
                 <span className="rounded bg-emerald-50 px-1.5 py-px text-[9px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
@@ -164,20 +164,23 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto flex flex-col gap-3.5">
+        {/* Hidden on the chat page itself: the tip's only job is to open it. */}
+        {!pathname.startsWith("/chat") && (
         <div className="relative overflow-hidden rounded-[10px] bg-zinc-900 p-3.5 text-white dark:bg-zinc-800">
           <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-emerald-400">
-            AI Tip
+            {tSidebar("tipLabel")}
           </div>
           <p className="mb-2.5 text-xs leading-snug text-zinc-300">
-            {tSidebar("aiTip")}
+            {tSidebar("tipText")}
           </p>
-          <a
-            href="#"
+          <Link
+            href={`/chat?q=${encodeURIComponent(tSidebar("tipPrompt"))}`}
             className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 hover:text-emerald-300"
           >
-            {tSidebar("seeHow")} <ArrowRight className="h-2.5 w-2.5" />
-          </a>
+            {tSidebar("tipCta")} <ArrowRight className="h-2.5 w-2.5" aria-hidden />
+          </Link>
         </div>
+        )}
 
         <div className="flex items-center gap-2">
           <div className="flex-1">

@@ -1,9 +1,25 @@
 import { describe, it, expect } from "vitest";
 import {
   formatCurrency,
+  formatNetCurrency,
   formatSignedCurrency,
   formatPercent,
 } from "./format";
+
+describe("formatNetCurrency", () => {
+  it("keeps the minus on a negative net amount (a deficit is not a surplus)", () => {
+    expect(formatNetCurrency(-918977, "en")).toBe("−Rp 918,977");
+  });
+
+  it("shows positive amounts and zero without a sign", () => {
+    expect(formatNetCurrency(5000, "en")).toBe("Rp 5,000");
+    expect(formatNetCurrency(0, "en")).toBe("Rp 0");
+  });
+
+  it("groups the Indonesian way by default", () => {
+    expect(formatNetCurrency(-1240000)).toBe("−Rp 1.240.000");
+  });
+});
 
 describe("formatCurrency", () => {
   it("groups thousands the Indonesian way by default", () => {

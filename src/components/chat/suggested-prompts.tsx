@@ -69,7 +69,7 @@ export function SuggestedPrompts({ onPick }: { onPick: (q: string) => void }) {
           key={titleKey}
           type="button"
           onClick={() => onPick(t(questionKey))}
-          className="group flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3.5 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-800 dark:hover:bg-emerald-900/10"
+          className="group flex min-w-0 items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3.5 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50/50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-800 dark:hover:bg-emerald-900/10"
         >
           <span
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconClass}`}
@@ -80,7 +80,7 @@ export function SuggestedPrompts({ onPick }: { onPick: (q: string) => void }) {
             <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {t(titleKey)}
             </span>
-            <span className="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
               {t(questionKey)}
             </span>
           </span>

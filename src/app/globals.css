@@ -18,6 +18,10 @@
   --accent: #10b981;
   --accent-2: #059669;
   --accent-soft: #ecfdf5;
+  /* Accent shades that pass AA: --accent-solid behind white text (5.5:1),
+     --accent-fg as text or focus ring on the page background. */
+  --accent-solid: #047857;
+  --accent-fg: #047857;
   --danger: #f43f5e;
   --danger-soft: #fff1f2;
   --amber: #f59e0b;
@@ -43,6 +47,7 @@
   --accent: #34d399;
   --accent-2: #10b981;
   --accent-soft: rgba(16, 185, 129, 0.15);
+  --accent-fg: #34d399;
   --danger: #fb7185;
   --danger-soft: rgba(244, 63, 94, 0.15);
   --amber: #fbbf24;
@@ -51,6 +56,18 @@
   --shadow-md: 0 4px 12px -2px rgba(0,0,0,0.3);
   --shadow-lg: 0 24px 48px -16px rgba(0,0,0,0.5);
 }
+
+/* Accent picker (Settings). Emerald is the default above; each choice swaps
+   the brand tone plus its AA-checked shades. Income and expense colors stay
+   green and red whatever the accent. */
+[data-accent="indigo"] { --accent: #6366f1; --accent-solid: #4f46e5; --accent-fg: #4f46e5; }
+[data-accent="rose"] { --accent: #f43f5e; --accent-solid: #e11d48; --accent-fg: #be123c; }
+[data-accent="amber"] { --accent: #f59e0b; --accent-solid: #b45309; --accent-fg: #b45309; }
+[data-accent="blue"] { --accent: #3b82f6; --accent-solid: #2563eb; --accent-fg: #2563eb; }
+.dark[data-accent="indigo"] { --accent: #818cf8; --accent-fg: #818cf8; }
+.dark[data-accent="rose"] { --accent: #fb7185; --accent-fg: #fb7185; }
+.dark[data-accent="amber"] { --accent: #fbbf24; --accent-fg: #fbbf24; }
+.dark[data-accent="blue"] { --accent: #60a5fa; --accent-fg: #60a5fa; }
 
 html,
 body {
@@ -68,11 +85,11 @@ body {
 }
 
 ::selection {
-  @apply bg-emerald-500/30;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 *:focus-visible {
-  @apply outline-none ring-2 ring-emerald-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
+  @apply outline-none ring-2 ring-[color:var(--accent-fg)] ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
 }
 
 ::-webkit-scrollbar {

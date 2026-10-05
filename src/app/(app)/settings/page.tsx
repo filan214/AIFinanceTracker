@@ -25,32 +25,8 @@ import { cn } from "@/lib/cn";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { deleteUserData } from "@/lib/api";
-
-const ACCENT_COLORS = [
-  { value: "#10b981", dark: "#34d399" },
-  { value: "#6366f1", dark: "#818cf8" },
-  { value: "#f43f5e", dark: "#fb7185" },
-  { value: "#f59e0b", dark: "#fbbf24" },
-  { value: "#3b82f6", dark: "#60a5fa" },
-];
-
-function getStoredAccent(): string {
-  if (typeof window === "undefined") return "#10b981";
-  return localStorage.getItem("accent-color") || "#10b981";
-}
-
-function applyAccent(color: string) {
-  const entry = ACCENT_COLORS.find((c) => c.value === color);
-  document.documentElement.style.setProperty("--accent", entry?.value || color);
-  document.documentElement.style.setProperty(
-    "--accent-2",
-    entry?.dark || color
-  );
-  document.documentElement.style.setProperty(
-    "--accent-soft",
-    `${entry?.value || color}1a`
-  );
-}
+import { ACCENTS, applyAccent, readStoredAccent, storeAccent } from "@/lib/accent";
+import { anomalyAlertsEnabled, setAnomalyAlertsEnabled } from "@/lib/anomaly-cache";
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
@@ -58,8 +34,7 @@ export default function SettingsPage() {
   const { user, signOut, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [anomalyAlerts, setAnomalyAlerts] = useState(true);
-  const [monthlyReport, setMonthlyReport] = useState(true);
-  const [accentColor, setAccentColor] = useState("#10b981");
+  const [accentColor, setAccentColor] = useState<string>(ACCENTS[0].swatch);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -68,16 +43,21 @@ export default function SettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    setAccentColor(getStoredAccent());
-    applyAccent(getStoredAccent());
+    setAccentColor(readStoredAccent());
+    setAnomalyAlerts(anomalyAlertsEnabled());
     const id = setTimeout(() => setLoading(false), 250);
     return () => clearTimeout(id);
   }, []);
 
   function handleAccentChange(color: string) {
     setAccentColor(color);
-    localStorage.setItem("accent-color", color);
+    storeAccent(color);
     applyAccent(color);
+  }
+
+  function handleAnomalyAlerts(on: boolean) {
+    setAnomalyAlerts(on);
+    setAnomalyAlertsEnabled(on);
   }
 
   function startEditName() {
@@ -198,17 +178,21 @@ export default function SettingsPage() {
         <div className="my-3 border-t border-zinc-100 dark:border-zinc-800" />
         <Row label={t("accentLabel")} desc={t("accentDesc")}>
           <div className="flex gap-2">
-            {ACCENT_COLORS.map((c) => (
+            {ACCENTS.map((c) => (
               <button
-                key={c.value}
-                onClick={() => handleAccentChange(c.value)}
+                key={c.swatch}
+                type="button"
+                onClick={() => handleAccentChange(c.swatch)}
+                aria-label={t(`accent_${c.name}`)}
+                title={t(`accent_${c.name}`)}
+                aria-pressed={accentColor === c.swatch}
                 className={cn(
-                  "h-9 w-9 rounded-[10px] transition-all",
-                  accentColor === c.value
-                    ? "ring-2 ring-zinc-900 ring-offset-2 dark:ring-white"
+                  "h-9 w-9 rounded-[10px] transition-all [@media(hover:none)]:h-11 [@media(hover:none)]:w-11",
+                  accentColor === c.swatch
+                    ? "ring-2 ring-zinc-900 ring-offset-2 dark:ring-white dark:ring-offset-zinc-900"
                     : "ring-1 ring-zinc-200 hover:ring-zinc-400 dark:ring-zinc-700"
                 )}
-                style={{ background: c.value }}
+                style={{ background: c.swatch }}
               />
             ))}
           </div>
@@ -217,11 +201,7 @@ export default function SettingsPage() {
 
       <Section title={t("notifications")} icon={Bell}>
         <Row label={t("anomalyAlerts")} desc={t("anomalyAlertsDesc")}>
-          <Toggle checked={anomalyAlerts} onChange={setAnomalyAlerts} />
-        </Row>
-        <div className="my-3 border-t border-zinc-100 dark:border-zinc-800" />
-        <Row label={t("monthlyReportToggle")} desc={t("monthlyReportDesc")}>
-          <Toggle checked={monthlyReport} onChange={setMonthlyReport} />
+          <Toggle checked={anomalyAlerts} onChange={handleAnomalyAlerts} label={t("anomalyAlerts")} />
         </Row>
       </Section>
 
@@ -281,19 +261,25 @@ export default function SettingsPage() {
 function Toggle({
   checked,
   onChange,
+  label,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
+  label: string;
 }) {
   return (
     <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-5 w-9 rounded-full p-0.5 transition-colors",
         // Touch-only: an invisible 44x44 hit area centered on the small track,
         // so the toggle is tappable without changing its visual size.
         "before:absolute before:left-1/2 before:top-1/2 before:hidden before:h-11 before:w-11 before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] [@media(hover:none)]:before:block",
-        checked ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+        checked ? "bg-[color:var(--accent-solid)]" : "bg-zinc-300 dark:bg-zinc-600"
       )}
     >
       <span

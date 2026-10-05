@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/i18n/locale-provider";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatNetCurrency } from "@/lib/format";
 import type { ReportMetrics } from "@/types/report";
 
 function ChangeRow({ change, upIsGood }: { change: number; upIsGood: boolean }) {
@@ -29,37 +29,36 @@ function ChangeRow({ change, upIsGood }: { change: number; upIsGood: boolean }) 
   );
 }
 
+const TONE_CARD = {
+  neutral: "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
+  good: "border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-900/15",
+  bad: "border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-900/15",
+};
+const TONE_VALUE = {
+  neutral: "",
+  good: "text-emerald-700 dark:text-emerald-400",
+  bad: "text-rose-700 dark:text-rose-400",
+};
+
 function Metric({
   label,
   value,
   change,
   upIsGood,
-  accent,
+  tone = "neutral",
 }: {
   label: string;
   value: string;
   change?: number | null;
   upIsGood?: boolean;
-  accent?: boolean;
+  tone?: keyof typeof TONE_CARD;
 }) {
   return (
-    <div
-      className={
-        "rounded-xl border p-4 shadow-[var(--shadow-sm)] " +
-        (accent
-          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-900/15"
-          : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900")
-      }
-    >
+    <div className={"rounded-xl border p-4 shadow-[var(--shadow-sm)] " + TONE_CARD[tone]}>
       <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
         {label}
       </p>
-      <p
-        className={
-          "mt-2 font-mono text-lg font-semibold tabular-nums sm:text-[22px] " +
-          (accent ? "text-emerald-600 dark:text-emerald-400" : "")
-        }
-      >
+      <p className={"mt-2 font-mono text-lg font-semibold tabular-nums sm:text-[22px] " + TONE_VALUE[tone]}>
         {value}
       </p>
       {typeof change === "number" && (
@@ -100,14 +99,14 @@ export function MetricsRow({ metrics }: { metrics: ReportMetrics }) {
       />
       <Metric
         label={t("saved")}
-        value={formatCurrency(metrics.saved, locale)}
-        accent
+        value={formatNetCurrency(metrics.saved, locale)}
+        tone={metrics.saved < 0 ? "bad" : "good"}
       />
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-[var(--shadow-sm)] dark:border-emerald-900/40 dark:bg-emerald-900/15">
+      <div className={"rounded-xl border p-4 shadow-[var(--shadow-sm)] " + TONE_CARD.neutral}>
         <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
           {t("savingsRate")}
         </p>
-        <p className="mt-2 font-mono text-lg font-semibold tabular-nums text-emerald-600 dark:text-emerald-400 sm:text-[22px]">
+        <p className="mt-2 font-mono text-lg font-semibold tabular-nums sm:text-[22px]">
           {metrics.savingsRate}%
         </p>
         <p
@@ -117,7 +116,6 @@ export function MetricsRow({ metrics }: { metrics: ReportMetrics }) {
           }
         >
           {statusLabel[metrics.savingsRateStatus]}
-          {metrics.savingsRateStatus === "above_average" && " 🔥"}
         </p>
       </div>
     </div>

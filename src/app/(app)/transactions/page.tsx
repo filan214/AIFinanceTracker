@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
-import { TransactionRow } from "@/components/transactions/transaction-row";
+import { TransactionRow, TABLE_COLS_SM } from "@/components/transactions/transaction-row";
 import {
   TransactionModal,
   type TransactionDraft,
@@ -220,19 +220,14 @@ export default function TransactionsPage() {
       ) : (
         <>
           <div className="animate-slide-up overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[var(--shadow-sm)] dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="hidden border-b border-zinc-100 px-5 py-2.5 sm:grid sm:grid-cols-[6rem_1fr_auto_8rem] sm:items-center sm:gap-3 dark:border-zinc-800">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                {t("thDate")}
-              </span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                {t("thDescription")}
-              </span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                {t("thCategory")}
-              </span>
-              <span className="text-right text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                {t("thAmount")}
-              </span>
+            <div
+              className={`hidden border-b border-zinc-100 px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:text-zinc-400 sm:grid sm:items-center sm:gap-3 ${TABLE_COLS_SM}`}
+            >
+              <span aria-hidden />
+              <span>{t("thDescription")}</span>
+              <span>{t("thCategory")}</span>
+              <span className="text-right">{t("thAmount")}</span>
+              <span aria-hidden />
             </div>
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {paged.map((tx) => (

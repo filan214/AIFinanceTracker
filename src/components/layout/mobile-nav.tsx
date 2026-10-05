@@ -6,25 +6,26 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   Receipt,
+  Target,
   FileText,
   MessageCircle,
-  Settings,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 type NavItem = {
   href: string;
-  labelKey: "dashboard" | "transactions" | "reports" | "chat" | "settings";
+  labelKey: "dashboard" | "transactions" | "planning" | "reports" | "chat";
   icon: LucideIcon;
 };
 
+// Settings lives in the mobile header so Planning (budgets, goals) gets a tab.
 const NAV: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/transactions", labelKey: "transactions", icon: Receipt },
+  { href: "/planning", labelKey: "planning", icon: Target },
   { href: "/reports", labelKey: "reports", icon: FileText },
   { href: "/chat", labelKey: "chat", icon: MessageCircle },
-  { href: "/settings", labelKey: "settings", icon: Settings },
 ];
 
 export function MobileNav() {
@@ -41,10 +42,9 @@ export function MobileNav() {
             href={href}
             className={cn(
               "flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium",
-              active
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-zinc-500"
+              active ? "text-[color:var(--accent-fg)]" : "text-zinc-500 dark:text-zinc-400"
             )}
+            aria-current={active ? "page" : undefined}
           >
             <Icon className="h-5 w-5" />
             {t(labelKey)}
