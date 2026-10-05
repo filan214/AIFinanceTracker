@@ -1,23 +1,27 @@
 # Handoff — Smart Finn Track
 
-_Last updated: 2026-09-30 · branch `main` · pushed through `d4e863f` — matches `origin/main`, deployed to production_
+_Last updated: 2026-10-06 · branch `main` · pushed through `40020aa`; `85f5573`, `0acab75` and the docs commit after them await push_
 
 ## Pick up here
 
-**Nothing is broken, mid-edit, or unpushed.** This session moved all AI from
-OpenRouter to Google AI Studio (Gemini), cut the number of AI requests, and
-made receipt errors honest. Details and rationale live in `progress.md`
-(**Completed** 11–13, **Key decisions**) — not duplicated here.
+**Nothing is broken or mid-edit; two code commits and this docs commit are
+unpushed.** The 2026-10-06 session was a UI/UX refinement pass: an audit of
+every page, then fixes for misleading numbers, broken mobile layouts, fake
+or dead controls, contrast, and a round of polish. UI only, no API or schema
+change. What changed and why is in `progress.md` (**Completed** 14, **Key
+decisions**); the 2026-09-30 AI work is **Completed** 11–13.
 
 ### First thing to do
 
-**Smoke-test the rest of production** (no need to wait for a reset):
-quick-add ("kopi 25rb kemarin" → `ai:true`), one chat message, dashboard
-load. Receipt scan already passed on prod at `d4e863f` (200 → 36500 /
-INDOMARET). `d7dfe88`'s lite-model paths (quick-add, categorize, anomaly)
-are unit-tested and were checked live locally, but not yet on prod. Ideally
-the user scans a real receipt on their phone — that closes the "real
-phone" item too.
+1. **The user pushes** (`git status -sb` shows `ahead 3` until then). We
+   commit to `main`; the user pushes.
+2. **Check the refinements on a real phone, in light and dark mode.** The
+   click-through ran on desktop Chrome via DOM measurements at 390px; light
+   mode was checked by measured contrast only, because the Chrome window was
+   hidden during that part.
+3. Then the carried-over prod smoke test: quick-add ("kopi 25rb kemarin" →
+   `ai:true`), one chat message, dashboard load, ideally a real receipt scan
+   on the phone. Receipt already passed on prod at `d4e863f`.
 
 ### Watch out: the quota is tiny — don't burn it testing
 
@@ -41,14 +45,36 @@ phone" item too.
 - **If a receipt scan fails on prod:** "AI is busy or at today's limit"
   means quota/overload (`503`) — wait for the reset, don't debug the photo.
   "Couldn't read the receipt" (`422`) means the model saw no total.
+- **Feature gap (needs a decision, not UI work):** transactions can't be
+  edited at all; there's no PATCH route and the modal has no edit mode.
+- **Optional follow-up UI pass** on pre-existing items outside the approved
+  list: 23 em dashes in en/id copy, small `zinc-400` labels that fail AA in
+  untouched components, the landing "See how it works" link, the mobile
+  Transactions filter bar. Listed in `progress.md` → Pending.
 - **Backlog:** dead `CATEGORY_KEYS` / `tCat` in
   `src/components/transactions/transaction-modal.tsx` (grep first, then
   delete, then run typecheck + lint + tests).
 
+### Working on the UI
+
+- The **antislop** Claude Code plugin is installed; it asks DURING or AFTER
+  once per session (no saved preference). This session used DURING.
+- Check contrast with its script instead of by eye:
+  `python <antislop-human skill dir>/contrast-check.py "#fg" "#bg"`.
+- New primary-colored UI uses `bg-[color:var(--accent-solid)]` (white text)
+  or `text-[color:var(--accent-fg)]`, not `emerald-*`, so the accent picker
+  applies. Income/expense colors stay `emerald`/`rose`.
+- In local dev, the Next.js overlay shows "1 issue": a hydration warning
+  about `bis_skin_checked` attributes injected by a browser extension
+  (Bitdefender). Not an app bug.
+- If Chrome screenshots time out while JavaScript still runs, check
+  `document.visibilityState`; a hidden window stops painting.
+
 ## State snapshot
 
-- **Git**: `main` = `origin/main` (plus this docs update). No stash, no worktree.
-- **Tests**: `npm test` → 153/153. `typecheck`, `lint`, `build` all exit 0.
+- **Git**: `main` is `ahead 3` of `origin/main` (`85f5573`, `0acab75`, this
+  docs commit). No stash, no worktree.
+- **Tests**: `npm test` → 166/166. `typecheck`, `lint`, `build` all exit 0.
 - **AI**: `src/lib/llm.ts` → `@ai-sdk/google`. `askLLM(prompt, { lite })`
   picks the model; `modelSettings()` gives 3.5 Flash `thinkingBudget: 0`
   (its thinking tokens would truncate short JSON replies) and gives Lite no

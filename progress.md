@@ -1,11 +1,12 @@
 # Progress — Smart Finn Track
 
-_Last updated: 2026-09-30 · branch `main` · pushed through `d4e863f` — matches `origin/main`, deployed to production_
+_Last updated: 2026-10-06 · branch `main` · pushed through `40020aa`; `85f5573`, `0acab75` and the docs commit after them await push_
 
 ## Completed ✅
 
 Items 1–10 are on `main` (`293e9b2..6ed6e48`); 11–13 were added 2026-09-30
-(`87f6fb6..d4e863f`). All pushed.
+(`87f6fb6..d4e863f`), all pushed. Item 14 was added 2026-10-06
+(`85f5573`, `0acab75`) and is not pushed yet.
 New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Vercel).
 
 1. **Quick-add from text** — type "kopi 25rb kemarin" in the transaction modal;
@@ -60,11 +61,41 @@ New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Ve
     from a model reply with no total → `422 unreadable` → "couldn't read".
     No extra retry, so a spent daily quota isn't hammered. Verified live
     against a real quota 429.
+14. **UI/UX refinement pass** (2026-10-06, `85f5573` + `0acab75`), from an
+    audit of every page on prod (desktop, 390px, light and dark). UI only,
+    no API or schema change. Highlights:
+    - Money: Balance and Saved keep their minus (`formatNetCurrency`) and
+      turn rose when negative; the balance card always renders (it hid
+      when income was 0) with Healthy / Warning / Deficit; the fake
+      "0.0% vs last month" is gone.
+    - Mobile: transaction rows reflow (names were cut to "Spotif..."); Chat
+      no longer overflows (`min-w-0` on the app column); Planning is in
+      the tab bar, Settings moved to a header gear; dashboard header fits.
+    - Fake UI made honest: "Quick insight" is now a Month summary built by
+      `summarizeMonth()` from loaded data (no AI request); the sidebar tip
+      opens Chat with a prefilled question; the accent picker now drives
+      buttons, active nav, focus rings, toggles and Chat; the anomaly-alert
+      toggle is saved and the dashboard skips the alert and the request
+      when it's off; the monthly-report toggle (wired to nothing) is gone;
+      the chat privacy line names Google Gemini.
+    - Charts: the daily trend zero-fills days without spending
+      (`dailySeries()`) and offers 7D / Month instead of 30D / 90D buttons
+      that drew the same chart; the Reports 6-month chart is HTML bars with
+      fixed-size labels; tooltips follow the theme.
+    - Dead controls removed: the transaction row pencil (editing doesn't
+      exist), and the recurring toggle knob that sat outside its track.
+    - Contrast: category pills measured 1.99 to 3.50:1 in light mode and
+      are now 5:1 or more in both themes (`CATEGORY_TEXT` color-mix); new
+      text measured 4.83 to 7.73 (light) and 6.23 to 11.99 (dark).
+    - Polish: compact anomaly alert (23% shorter, transactions behind a
+      disclosure), donut legend no longer wraps amounts, theme control
+      gains System, landing "Try the demo" lines up.
+    Verified by a click-through on localhost plus DOM measurements at 390px.
 
 Schema: `supabase/planning.sql` + `supabase/Seed Planning for Demo User.sql`
 (run by the user in the Supabase SQL Editor; seeded rows verified).
 
-Quality gates at HEAD: **153 tests pass** (134 before 2026-09-30 + 19 new),
+Quality gates at HEAD: **166 tests pass** (153 before 2026-10-06 + 13 new),
 typecheck, lint, build, and en/id i18n parity all clean. Every new API route
 was checked live; full Chrome click-through of all 5 pending UI fixes done
 on production 2026-09-29 (see `handoff.md`) — all PASS. A second real
@@ -102,6 +133,17 @@ multi-user testing.
 - **API routes validate id shape (`z.uuid()`) before hitting the DB**, and
   use `.maybeSingle()` + an explicit 404 instead of `.single()`'s 500 on a
   missing row — pattern now consistent across budgets/goals/recurring.
+- **UI refinements don't touch data logic.** Display values come from data
+  the page already loaded, through small tested helpers (`formatNetCurrency`,
+  `dailySeries`, `summarizeMonth`), never from new API calls.
+- **Accent is brand and CTA only**: primary buttons, active nav, focus
+  rings, toggles, Chat. Income stays green and expense red whatever the
+  accent. Each accent has AA-checked shades in `globals.css`
+  (`[data-accent]`: `--accent-solid` behind white text, `--accent-fg` for
+  text and rings); `src/lib/accent.ts` applies the choice.
+- **antislop plugin, DURING mode, for UI work**: no em dashes in new copy,
+  contrast measured with its checker (never eyeballed), 44px touch targets,
+  no dead controls, a recorded click-through before calling UI done.
 - **Commit to `main` directly; user pushes.**
 
 ## Pending / unfinished
@@ -131,27 +173,47 @@ Nothing is half-built. Open items, all needing a human or an external system:
   a quota is out, receipt shows "AI busy", chat/report error; categorize
   and quick-add fall back to keyword rules.
 - [x] **Receipt errors are honest now** — see Completed #13.
+- [ ] **Push** `85f5573`, `0acab75` and the docs commit after them.
+- [ ] **Look at the refinements on a real phone, in both themes.** The
+  click-through ran on desktop Chrome; the window went hidden partway, so
+  light mode was verified by measured contrast, not screenshots, and the
+  touch-only sizes (`[@media(hover:none)]`) by code only.
+- [ ] **(Feature gap, outside UI scope) Transactions can't be edited.** No
+  PATCH API and no edit mode in the modal, though the PRD promises inline
+  edit and a manual category change. The dead pencil button was removed in
+  `85f5573`; editing needs an API and a decision.
+- [ ] **(Pre-existing, outside the approved refinement list)** 23 em dashes
+  remain in en/id copy; small `zinc-400` labels on white (2.56:1, below
+  AA) in components this pass didn't touch, e.g. the metric card's "vs last
+  month" and the sidebar section labels; landing "See how it works" links to
+  `/dashboard`, which sends a logged-out visitor to login; the mobile
+  Transactions filter bar stacks three rows; the sidebar language toggle
+  leaves empty space. A follow-up pass was offered, not started.
 
 ## Next steps
 
 See `handoff.md` for state.
 
-1. Smoke-test prod (quick-add, chat, dashboard anomaly; receipt already
-   passed) — ideally on the phone. Read real RPM/RPD at
-   aistudio.google.com/rate-limit.
-2. Remove `OPENROUTER_API_KEY` from Vercel.
-3. Dispatch the keep-alive GitHub Action manually.
-4. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
+1. Push `85f5573`, `0acab75` and the docs commit, then check the app on a
+   phone in light and dark mode.
+2. Smoke-test prod (quick-add, chat, dashboard anomaly; receipt already
+   passed). Read real RPM/RPD at aistudio.google.com/rate-limit.
+3. Remove `OPENROUTER_API_KEY` from Vercel.
+4. Dispatch the keep-alive GitHub Action manually.
+5. (Optional) Follow-up UI pass on the pre-existing items in Pending.
+6. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
    `tCat`) still left alone deliberately.
 
 ## Last touched files / sections
 
-- `src/lib/llm.ts` — Google provider, `DEFAULT_MODEL`/`LITE_MODEL`, `modelSettings()`, thinking off
-- `src/lib/categorize.ts` (new) — keyword-first single categorization; `src/app/api/ai/categorize/route.ts` uses it
-- `src/lib/csv/batch.ts` (`categorizeKeywordFirst`), `src/app/api/transactions/import/route.ts`
-- `src/lib/anomaly.ts` (`hasSpendingSpike`, `markNewTransactions`), `src/app/api/ai/anomaly/route.ts` — gate + compact prompt
-- `src/app/api/ai/parse/route.ts`, `src/lib/chat/title.ts` — lite model
-- `src/app/api/ai/chat/route.ts` — Google model, key check; `src/lib/ai/tools.ts` — `getTransactions` drops `id`
-- `src/lib/receipt.ts` (`readReceipt`), `src/app/api/ai/receipt/route.ts`, `src/lib/api.ts` (`scanReceipt`), `src/components/transactions/smart-input.tsx`, `messages/{en,id}.json` (`scanBusy`) — busy vs unreadable
-- `package.json` — `+@ai-sdk/google`, `-@ai-sdk/openai`; `README.md` — setup/stack
-- `handoff.md`, `progress.md` — this documentation
+2026-10-06 UI/UX refinement pass:
+- `src/lib/format.ts` (`formatNetCurrency`), `src/lib/daily-series.ts`, `src/lib/month-summary.ts` (new, with tests), `src/lib/chart-theme.ts`, `src/lib/accent.ts` (new)
+- `src/lib/anomaly-cache.ts` (`anomalyAlertsEnabled` / `setAnomalyAlertsEnabled`)
+- `src/app/globals.css` (`--accent-solid`, `--accent-fg`, `[data-accent]` blocks, focus ring, selection)
+- `src/components/dashboard/{metric-card,insight-card,daily-line,category-donut,anomaly-alert}.tsx`, `src/app/(app)/dashboard/page.tsx`
+- `src/components/transactions/transaction-row.tsx` (`TABLE_COLS_SM`), `src/app/(app)/transactions/page.tsx`, `src/components/category-badge.tsx` (`CATEGORY_ICON`, `CATEGORY_TEXT`)
+- `src/components/layout/{mobile-nav,mobile-header,sidebar,page-header}.tsx`, `src/app/(app)/layout.tsx`
+- `src/app/(app)/reports/components/{metrics-row,trend-bar-chart}.tsx`, `src/app/(app)/settings/page.tsx`, `src/components/theme-toggle.tsx`, `src/components/planning/switch.tsx`
+- `src/components/chat/{suggested-prompts,chat-bubble,chat-composer}.tsx`, `src/app/(app)/chat/page.tsx`, `src/app/onboarding/page.tsx`, `src/app/page.tsx`, `src/components/ui/button.tsx`, `src/components/accent-init.tsx`
+- `messages/{en,id}.json` (Month summary, trend, balance, tip, accent names, privacy; removed `insightText`, `insightActionable`, `thDate`, `aiTip`, `seeHow`, `monthlyReport*`)
+- `handoff.md`, `progress.md`: this documentation
