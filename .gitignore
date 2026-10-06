@@ -6,3 +6,6 @@ build
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# Private planning doc, kept local only
+PRD.md
