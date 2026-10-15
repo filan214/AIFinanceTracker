@@ -94,14 +94,14 @@ export default function LoginPage() {
             <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
               {/* Email */}
               <div className="animate-slide-up" style={{ animationDelay: "60ms" }}>
-                <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                <label htmlFor="login-email" className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                   {t("email")}
                 </label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                   <Input
+                    id="login-email"
                     type="email"
-                    placeholder="you@example.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -112,14 +112,14 @@ export default function LoginPage() {
 
               {/* Password */}
               <div className="animate-slide-up" style={{ animationDelay: "120ms" }}>
-                <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                <label htmlFor="login-password" className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                   {t("password")}
                 </label>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                   <Input
+                    id="login-password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
