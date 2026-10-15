@@ -1,0 +1,1 @@
+Smart Finn Track dashboard with a month's income, expenses, balance, spending by category and daily spending trend

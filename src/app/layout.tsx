@@ -18,10 +18,29 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const SHARE_TITLE = "Smart Finn Track: personal finance with an AI advisor";
+const SHARE_DESCRIPTION =
+  "Track spending in Bahasa Indonesia or English, ask an AI advisor about your real transactions, scan receipts and plan budgets. Try the live demo, no sign-up needed.";
+
 export const metadata: Metadata = {
+  // Link previews need absolute image URLs; the images themselves come from
+  // opengraph-image.png / twitter-image.png in this folder.
+  metadataBase: new URL("https://ai-finance-tracker-delta-drab.vercel.app"),
   title: "Smart Finn Track — AI-powered personal finance",
   description:
     "Track your money, automatically categorized and analyzed by AI. Bahasa Indonesia and English.",
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Smart Finn Track",
+    title: SHARE_TITLE,
+    description: SHARE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SHARE_TITLE,
+    description: SHARE_DESCRIPTION,
+  },
 };
 
 export default async function RootLayout({
