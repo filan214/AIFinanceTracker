@@ -6,9 +6,9 @@ name: Keep Supabase alive
 
 on:
   schedule:
-    # Every 3 days at 09:00 UTC — comfortably inside the ~7-day pause window,
-    # so a single missed or failed run can't let the project fall asleep.
-    - cron: '0 9 */3 * *'
+    # Three times a day. Supabase judges activity over the past week and says a
+    # few requests each day is typically enough; one every 3 days was not.
+    - cron: '0 */8 * * *'
   workflow_dispatch:
 
 jobs:
@@ -43,17 +43,19 @@ jobs:
         # Retries absorb transient DNS/network/5xx errors so a blip doesn't
         # fail the run. -o /dev/null keeps row data out of the logs.
         run: |
-          curl -fsS --retry 5 --retry-delay 15 --retry-all-errors --max-time 30 \
-            -o /dev/null -w 'Supabase ping OK: HTTP %{http_code}\n' \
+          code=$(curl -fsS --retry 5 --retry-delay 15 --retry-all-errors --max-time 30 \
+            -o /dev/null -w '%{http_code}' \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/user_profiles?select=id&limit=1"
+            "$SUPABASE_URL/rest/v1/user_profiles?select=id&limit=1")
+          echo "Supabase ping OK: HTTP $code"
 
       - name: Ping app health endpoint (best effort)
         # The app ping is a bonus health check, not the point of this job, so a
         # Vercel hiccup here must not fail the Supabase keep-alive above.
         continue-on-error: true
         run: |
-          curl -fsS --retry 5 --retry-delay 15 --retry-all-errors --max-time 30 \
-            -o /dev/null -w 'App health OK: HTTP %{http_code}\n' \
-            "$APP_URL/api/health"
+          code=$(curl -fsS --retry 5 --retry-delay 15 --retry-all-errors --max-time 30 \
+            -o /dev/null -w '%{http_code}' \
+            "$APP_URL/api/health")
+          echo "App health OK: HTTP $code"
