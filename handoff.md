@@ -1,27 +1,37 @@
 # Handoff — Smart Finn Track
 
-_Last updated: 2026-10-06 · branch `main` · pushed through `40020aa`; `85f5573`, `0acab75` and the docs commit after them await push_
+_Last updated: 2026-11-04 · branch `main` · pushed through `6c8a6f9`; this docs commit awaits push_
 
 ## Pick up here
 
-**Nothing is broken or mid-edit; two code commits and this docs commit are
-unpushed.** The 2026-10-06 session was a UI/UX refinement pass: an audit of
-every page, then fixes for misleading numbers, broken mobile layouts, fake
-or dead controls, contrast, and a round of polish. UI only, no API or schema
-change. What changed and why is in `progress.md` (**Completed** 14, **Key
-decisions**); the 2026-09-30 AI work is **Completed** 11–13.
+**Nothing is broken or mid-edit; only this docs commit is unpushed.** The
+2026-11-04 session looked into the failed "Keep Supabase alive" Action after
+the project paused. The user restored it, and the ping now runs 3 times a day
+instead of every 3 days. What changed and why is in `progress.md`
+(**Completed** 19, **Key decisions**); since the 2026-10-06 UI/UX pass
+(**Completed** 14) came the PDF, README, link preview and login fixes (15-18).
 
 ### First thing to do
 
-1. **The user pushes** (`git status -sb` shows `ahead 3` until then). We
-   commit to `main`; the user pushes.
-2. **Check the refinements on a real phone, in light and dark mode.** The
+1. **The user pushes** this docs commit. We commit to `main`; the user pushes.
+2. **On or after 2026-11-11, confirm Supabase stayed awake**, with no pause
+   warning email, and that scheduled runs on the new cron passed. So far only
+   a manual run is proven (`41805184783`, HTTP 200). If a warning arrives, the
+   anon pings likely don't count as activity and the ping needs changing.
+3. **Check the refinements on a real phone, in light and dark mode.** The
    click-through ran on desktop Chrome via DOM measurements at 390px; light
    mode was checked by measured contrast only, because the Chrome window was
    hidden during that part.
-3. Then the carried-over prod smoke test: quick-add ("kopi 25rb kemarin" →
+4. Then the carried-over prod smoke test: quick-add ("kopi 25rb kemarin" →
    `ai:true`), one chat message, dashboard load, ideally a real receipt scan
    on the phone. Receipt already passed on prod at `d4e863f`.
+
+### Watch out: `Could not resolve host` in keep-alive may mean a pause
+
+The Oct 22 to Nov 1 failures all show this error for the project host, and it
+cleared after the user's restore. Check the Supabase dashboard before debugging
+DNS or secrets; if paused, restore it, then dispatch the workflow. Supabase docs
+don't mention DNS, so this is observed behavior from one confirmed restore.
 
 ### Watch out: the quota is tiny — don't burn it testing
 
@@ -40,8 +50,11 @@ decisions**); the 2026-09-30 AI work is **Completed** 11–13.
 ### Open items (see `progress.md` → Pending)
 
 - **User:** remove `OPENROUTER_API_KEY` from Vercel (unused since `87f6fb6`);
-  retest the receipt camera on a real phone; dispatch the keep-alive GitHub
-  Action.
+  retest the receipt camera on a real phone.
+- **Waiting on the user:** should the register page lose its placeholders too,
+  like login in `f99b0df`?
+- **Link preview on `/`:** prod serves correct tags; a missing image is most
+  likely the chat app's cache. No code change needed (`progress.md` → Pending).
 - **If a receipt scan fails on prod:** "AI is busy or at today's limit"
   means quota/overload (`503`) — wait for the reset, don't debug the photo.
   "Couldn't read the receipt" (`422`) means the model saw no total.
@@ -72,9 +85,14 @@ decisions**); the 2026-09-30 AI work is **Completed** 11–13.
 
 ## State snapshot
 
-- **Git**: `main` is `ahead 3` of `origin/main` (`85f5573`, `0acab75`, this
-  docs commit). No stash, no worktree.
-- **Tests**: `npm test` → 166/166. `typecheck`, `lint`, `build` all exit 0.
+- **Git**: `main` is `ahead 1` of `origin/main` (this docs commit). No stash,
+  no worktree. `smart-finn-track-report-2026-10.pdf` in the root is the user's
+  own untracked file; leave it alone.
+- **Tests**: `npm test` → 169/169, typecheck exit 0 (2026-11-04). `lint` and
+  `build` last run in the 2026-10-06 pass.
+- **Keep-alive**: `.github/workflows/keep-alive.yml`, cron `0 */8 * * *`. Repo
+  secrets are the `NEXT_PUBLIC_` names; the editor warning about
+  `SUPABASE_URL` / `SUPABASE_ANON_KEY` is harmless, the workflow falls back.
 - **AI**: `src/lib/llm.ts` → `@ai-sdk/google`. `askLLM(prompt, { lite })`
   picks the model; `modelSettings()` gives 3.5 Flash `thinkingBudget: 0`
   (its thinking tokens would truncate short JSON replies) and gives Lite no

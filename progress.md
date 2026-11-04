@@ -1,12 +1,12 @@
 # Progress — Smart Finn Track
 
-_Last updated: 2026-10-06 · branch `main` · pushed through `40020aa`; `85f5573`, `0acab75` and the docs commit after them await push_
+_Last updated: 2026-11-04 · branch `main` · pushed through `6c8a6f9`; this docs commit awaits push_
 
 ## Completed ✅
 
 Items 1–10 are on `main` (`293e9b2..6ed6e48`); 11–13 were added 2026-09-30
-(`87f6fb6..d4e863f`), all pushed. Item 14 was added 2026-10-06
-(`85f5573`, `0acab75`) and is not pushed yet.
+(`87f6fb6..d4e863f`); 14 on 2026-10-06 (`85f5573`, `0acab75`); 15-18 between
+2026-10-06 and 2026-10-16; 19 on 2026-11-04 (`6c8a6f9`). All pushed.
 New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Vercel).
 
 1. **Quick-add from text** — type "kopi 25rb kemarin" in the transaction modal;
@@ -91,12 +91,32 @@ New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Ve
       disclosure), donut legend no longer wraps amounts, theme control
       gains System, landing "Try the demo" lines up.
     Verified by a click-through on localhost plus DOM measurements at 390px.
+15. **PDF report tables** (`db9e9c3`, `src/lib/report-pdf.ts`): `columnLayout()`
+    aligns each header with its column; Saved keeps its minus and turns rose
+    when negative.
+16. **README rewritten for the portfolio** (`7735701`). `PRD.md` is now local
+    only (`552a0f4`, gitignored); it still exists in history from `c520a90`.
+17. **Link preview** (`f26f527`): `src/app/opengraph-image.png` and
+    `twitter-image.png` are a real 1200x630 capture of the demo dashboard;
+    `layout.tsx` adds `metadataBase` and share title/description. Verified
+    with WhatsApp and Facebook crawler user agents on prod.
+18. **Login form** (`f99b0df`): input placeholders removed, labels linked to
+    their fields with `htmlFor`/`id`.
+19. **Keep-alive pings more often** (`6c8a6f9`). The Supabase project paused
+    again; all 5 runs from Oct 22 to Nov 1 failed with `curl: (6) Could not
+    resolve host`. The pause most likely came first: the Oct 19 ping returned
+    200, and one missed ping 3 days later can't trip a 7-day rule. One request
+    every 3 days is below Supabase's guidance of a few per day, so the cron is
+    now `0 */8 * * *`. Failed runs also no longer print
+    `Supabase ping OK: HTTP 000`. Verified: manual run `41805184783` passed on
+    `6c8a6f9` with HTTP 200. Whether it prevents the next pause is not proven
+    yet (see Pending).
 
 Schema: `supabase/planning.sql` + `supabase/Seed Planning for Demo User.sql`
 (run by the user in the Supabase SQL Editor; seeded rows verified).
 
-Quality gates at HEAD: **166 tests pass** (153 before 2026-10-06 + 13 new),
-typecheck, lint, build, and en/id i18n parity all clean. Every new API route
+Quality gates: **169 tests pass** and typecheck is clean at `6c8a6f9`, re-run
+2026-11-04. Lint, build and en/id i18n parity were last run for item 14. Every new API route
 was checked live; full Chrome click-through of all 5 pending UI fixes done
 on production 2026-09-29 (see `handoff.md`) — all PASS. A second real
 account (`ferdiputra1404@gmail.com`) now exists on prod, useful for future
@@ -144,6 +164,14 @@ multi-user testing.
 - **antislop plugin, DURING mode, for UI work**: no em dashes in new copy,
   contrast measured with its checker (never eyeballed), 44px touch targets,
   no dead controls, a recorded click-through before calling UI done.
+- **Keep-alive: several pings a day, not "one inside the 7-day window".**
+  Supabase judges activity over the past week and gives no exact threshold.
+  `Could not resolve host` on the ping cleared after the November 2026 restore.
+  Earlier failure clusters show the same error, but no restore was recorded
+  for them, and Supabase docs don't mention DNS. Treat the link as likely.
+- **Keep the current `*.vercel.app` domain.** Changing it would also mean
+  Supabase Auth Site URL and Redirect URLs, `metadataBase` in `layout.tsx`,
+  `APP_URL` in `keep-alive.yml`, and the README links.
 - **Commit to `main` directly; user pushes.**
 
 ## Pending / unfinished
@@ -161,8 +189,13 @@ Nothing is half-built. Open items, all needing a human or an external system:
 - [ ] **Receipt camera on a real phone** — user tried 2026-09-30 and got
   "couldn't read"; root cause was the OpenRouter 429 (fixed in `87f6fb6`).
   Needs a retest on the phone now that Gemini is live.
-- [ ] **Hardened keep-alive workflow run** (carried over) — dispatch it
-  manually in GitHub Actions to confirm green.
+- [x] **Hardened keep-alive workflow run** — dispatched manually 2026-11-04,
+  green with HTTP 200 (run `41805184783`).
+- [ ] **Check Supabase is still awake on or after 2026-11-11**, with no pause
+  warning email. Also confirm the first scheduled run on the new cron passed.
+  If a warning arrives anyway, the anon pings likely don't count as activity
+  and the ping itself needs changing. The Supabase pause email would also
+  confirm the pause date for item 19.
 - [x] **Click-through of the 5 UI fixes** — done 2026-09-29, all PASS.
 - [ ] **3.5 Flash's exact limits are unknown.** A burst of ~10 test calls
   hit a 429 naming `generate_content_free_tier_requests, limit: 20`, but
@@ -173,7 +206,15 @@ Nothing is half-built. Open items, all needing a human or an external system:
   a quota is out, receipt shows "AI busy", chat/report error; categorize
   and quick-add fall back to keyword rules.
 - [x] **Receipt errors are honest now** — see Completed #13.
-- [ ] **Push** `85f5573`, `0acab75` and the docs commit after them.
+- [x] **Push** `85f5573`, `0acab75` and later commits through `6c8a6f9` — done
+  by the user.
+- [ ] **Register page placeholders** (`src/app/register/page.tsx`) still show
+  "Filan", `you@example.com` and dots; login's were removed in `f99b0df`. The
+  user was asked whether to match it, no answer yet.
+- [ ] **Link preview on the root URL**: the user saw no image when sharing `/`,
+  while `/dashboard` worked. Prod serves correct tags on both, so this is most
+  likely the chat app's cached preview; no code change. Refresh it with
+  Facebook's Sharing Debugger, or share `/?v=2`.
 - [ ] **Look at the refinements on a real phone, in both themes.** The
   click-through ran on desktop Chrome; the window went hidden partway, so
   light mode was verified by measured contrast, not screenshots, and the
@@ -194,17 +235,23 @@ Nothing is half-built. Open items, all needing a human or an external system:
 
 See `handoff.md` for state.
 
-1. Push `85f5573`, `0acab75` and the docs commit, then check the app on a
-   phone in light and dark mode.
-2. Smoke-test prod (quick-add, chat, dashboard anomaly; receipt already
+1. On or after 2026-11-11, confirm Supabase stayed awake (see Pending).
+2. Check the app on a phone in light and dark mode.
+3. Smoke-test prod (quick-add, chat, dashboard anomaly; receipt already
    passed). Read real RPM/RPD at aistudio.google.com/rate-limit.
-3. Remove `OPENROUTER_API_KEY` from Vercel.
-4. Dispatch the keep-alive GitHub Action manually.
+4. Remove `OPENROUTER_API_KEY` from Vercel.
 5. (Optional) Follow-up UI pass on the pre-existing items in Pending.
-6. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
+6. (Optional) Decide on the register page placeholders.
+7. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
    `tCat`) still left alone deliberately.
 
 ## Last touched files / sections
+
+2026-10-06 to 2026-11-04, after the refinement pass:
+- `.github/workflows/keep-alive.yml` (cron, OK output)
+- `src/app/login/page.tsx`; `src/app/layout.tsx` (share metadata); `src/app/{opengraph,twitter}-image.{png,alt.txt}`
+- `src/lib/report-pdf.ts` + test (`columnLayout`); `README.md`; `.gitignore` (`PRD.md`)
+- `handoff.md`, `progress.md`: this documentation
 
 2026-10-06 UI/UX refinement pass:
 - `src/lib/format.ts` (`formatNetCurrency`), `src/lib/daily-series.ts`, `src/lib/month-summary.ts` (new, with tests), `src/lib/chart-theme.ts`, `src/lib/accent.ts` (new)
