@@ -1,12 +1,13 @@
 # Progress — Smart Finn Track
 
-_Last updated: 2026-11-04 · branch `main` · pushed through `6c8a6f9`; this docs commit awaits push_
+_Last updated: 2026-11-05 · branch `main` · pushed through `6c8a6f9`; `5bb2772`, `75732ab`, `b6e62b9`, `fd259fd` and this docs commit await push_
 
 ## Completed ✅
 
 Items 1–10 are on `main` (`293e9b2..6ed6e48`); 11–13 were added 2026-09-30
 (`87f6fb6..d4e863f`); 14 on 2026-10-06 (`85f5573`, `0acab75`); 15-18 between
-2026-10-06 and 2026-10-16; 19 on 2026-11-04 (`6c8a6f9`). All pushed.
+2026-10-06 and 2026-10-16; 19 on 2026-11-04 (`6c8a6f9`), all pushed. 20-22 were
+added 2026-11-05 (`75732ab`, `b6e62b9`, `fd259fd`) and are not pushed yet.
 New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Vercel).
 
 1. **Quick-add from text** — type "kopi 25rb kemarin" in the transaction modal;
@@ -111,12 +112,33 @@ New environment variable: `GOOGLE_GENERATIVE_AI_API_KEY` (in `.env.local` and Ve
     `Supabase ping OK: HTTP 000`. Verified: manual run `41805184783` passed on
     `6c8a6f9` with HTTP 200. Whether it prevents the next pause is not proven
     yet (see Pending).
+20. **Advisor replies are readable** (`75732ab`). The chat bubble only handled
+    `**bold**`, so line breaks collapsed, a list ran together into one
+    paragraph, and `*italic*` markers showed literally.
+    `src/lib/chat-markdown.ts` (new, 8 tests) parses paragraphs, flat lists,
+    bold and italic; saved chats benefit too. `src/lib/ai/prompts.ts` now sets
+    the structure: answer first, one item per line
+    (`**Name**: Rp X · Category · 5 Nov`), one short bold-labeled tip, no
+    headings, tables or emoji. Verified with real replies on localhost at
+    desktop and 390px width: list renders, no stray asterisks, no sideways
+    scroll. Test chats deleted from the demo account. Not checked on prod or a
+    real phone yet. The model usually follows the format but isn't guaranteed
+    to; for example, one reply left out the total.
+21. **Message box focus** (`b6e62b9`, `chat-composer.tsx`). The global focus ring
+    drew a rectangle on the textarea inside the composer's rounded border. The
+    composer now carries focus alone, in the accent color, and its border also
+    changes in dark mode, where `dark:border-zinc-700` overrode the old focus
+    color. Computed styles checked in light, dark and rose accent, by click and
+    Tab; all 5 accents measure 4.99:1 or more in both themes.
+22. **Register form** (`fd259fd`): placeholders removed and labels linked to
+    their fields, matching login. Checked in a browser without submitting, so
+    no account was created.
 
 Schema: `supabase/planning.sql` + `supabase/Seed Planning for Demo User.sql`
 (run by the user in the Supabase SQL Editor; seeded rows verified).
 
-Quality gates: **169 tests pass** and typecheck is clean at `6c8a6f9`, re-run
-2026-11-04. Lint, build and en/id i18n parity were last run for item 14. Every new API route
+Quality gates: **177 tests pass**, typecheck and lint are clean at `fd259fd`,
+re-run 2026-11-05. Build and en/id i18n parity were last run for item 14. Every new API route
 was checked live; full Chrome click-through of all 5 pending UI fixes done
 on production 2026-09-29 (see `handoff.md`) — all PASS. A second real
 account (`ferdiputra1404@gmail.com`) now exists on prod, useful for future
@@ -172,6 +194,10 @@ multi-user testing.
 - **Keep the current `*.vercel.app` domain.** Changing it would also mean
   Supabase Auth Site URL and Redirect URLs, `metadataBase` in `layout.tsx`,
   `APP_URL` in `keep-alive.yml`, and the README links.
+- **Chat renders a small markdown subset, with no library.** Paragraphs, flat
+  lists, bold and italic are enough for what the prompt allows, and model text
+  only ever becomes React text nodes, never HTML. Anything else, such as a
+  table, shows as plain text.
 - **Commit to `main` directly; user pushes.**
 
 ## Pending / unfinished
@@ -208,9 +234,14 @@ Nothing is half-built. Open items, all needing a human or an external system:
 - [x] **Receipt errors are honest now** — see Completed #13.
 - [x] **Push** `85f5573`, `0acab75` and later commits through `6c8a6f9` — done
   by the user.
-- [ ] **Register page placeholders** (`src/app/register/page.tsx`) still show
-  "Filan", `you@example.com` and dots; login's were removed in `f99b0df`. The
-  user was asked whether to match it, no answer yet.
+- [x] **Register page placeholders** — removed in `fd259fd`, see Completed #22.
+- [ ] **Push** `5bb2772`, `75732ab`, `b6e62b9`, `fd259fd` and this docs commit.
+- [ ] **See the chat format on prod and a real phone** after the push.
+- [ ] **Unexplained local dev signals, not traced.** One of 3 chat test runs on
+  2026-11-05 logged `ERR_CONNECTION_RESET` and `TypeError: Failed to fetch`
+  (the reply still rendered). The Next.js dev badge showed "1 Issue" on chat
+  and "2 Issues" later on the chat page; it was never opened, so its contents
+  and any link to these changes are unknown.
 - [ ] **Link preview on the root URL**: the user saw no image when sharing `/`,
   while `/dashboard` worked. Prod serves correct tags on both, so this is most
   likely the chat app's cached preview; no code change. Refresh it with
@@ -235,17 +266,22 @@ Nothing is half-built. Open items, all needing a human or an external system:
 
 See `handoff.md` for state.
 
-1. On or after 2026-11-11, confirm Supabase stayed awake (see Pending).
-2. Check the app on a phone in light and dark mode.
-3. Smoke-test prod (quick-add, chat, dashboard anomaly; receipt already
+1. Push, then look at an advisor reply on prod.
+2. On or after 2026-11-11, confirm Supabase stayed awake (see Pending).
+3. Check the app on a phone in light and dark mode.
+4. Smoke-test prod (quick-add, chat, dashboard anomaly; receipt already
    passed). Read real RPM/RPD at aistudio.google.com/rate-limit.
-4. Remove `OPENROUTER_API_KEY` from Vercel.
-5. (Optional) Follow-up UI pass on the pre-existing items in Pending.
-6. (Optional) Decide on the register page placeholders.
+5. Remove `OPENROUTER_API_KEY` from Vercel.
+6. (Optional) Follow-up UI pass on the pre-existing items in Pending.
 7. (Backlog) `transaction-modal.tsx` pre-existing dead code (`CATEGORY_KEYS`,
    `tCat`) still left alone deliberately.
 
 ## Last touched files / sections
+
+2026-11-05:
+- `src/lib/chat-markdown.ts` + test (new), `src/lib/ai/prompts.ts`, `src/components/chat/{chat-bubble,chat-composer}.tsx`
+- `src/app/register/page.tsx`
+- `handoff.md`, `progress.md`: this documentation
 
 2026-10-06 to 2026-11-04, after the refinement pass:
 - `.github/workflows/keep-alive.yml` (cron, OK output)
