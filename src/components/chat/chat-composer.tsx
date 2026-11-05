@@ -58,7 +58,7 @@ export function ChatComposer({
 
   return (
     <div className="border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-end gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 focus-within:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-800">
+      <div className="flex items-end gap-2 rounded-2xl border border-zinc-300 bg-white px-3 py-2 focus-within:border-[color:var(--accent-fg)] focus-within:ring-1 focus-within:ring-[color:var(--accent-fg)] dark:border-zinc-700 dark:bg-zinc-800 dark:focus-within:border-[color:var(--accent-fg)]">
         {/* Quick actions */}
         <div ref={quickRef} className="relative mb-1 shrink-0">
           <button
@@ -100,7 +100,7 @@ export function ChatComposer({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder={t("placeholder")}
-          className="max-h-[120px] flex-1 resize-none bg-transparent py-1.5 text-sm leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+          className="max-h-[120px] flex-1 resize-none bg-transparent py-1.5 text-sm leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-zinc-100"
         />
 
         <button
