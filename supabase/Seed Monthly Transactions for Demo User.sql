@@ -3,7 +3,7 @@ DO $$
 DECLARE
   demo_user_id uuid;
 BEGIN
-  SELECT id INTO demo_user_id FROM auth.users WHERE email = 'ferdiputra1404@gmail.com';
+  SELECT id INTO demo_user_id FROM auth.users WHERE email = 'your-email@example.com';
   -- demo_user_id := '00000000-0000-0000-0000-000000000000'; -- or paste a UUID directly
 
   IF demo_user_id IS NULL THEN

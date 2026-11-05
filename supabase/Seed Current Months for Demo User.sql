@@ -9,7 +9,7 @@ DO $$
 DECLARE
   demo_user_id uuid;
 BEGIN
-  SELECT id INTO demo_user_id FROM auth.users WHERE email = 'ferdiputra1404@gmail.com';
+  SELECT id INTO demo_user_id FROM auth.users WHERE email = 'your-email@example.com';
   -- demo_user_id := '00000000-0000-0000-0000-000000000000'; -- or paste a UUID directly
 
   IF demo_user_id IS NULL THEN
@@ -127,6 +127,6 @@ SELECT to_char(date, 'YYYY-MM') AS month,
        count(*)                 AS txns,
        sum(amount) FILTER (WHERE type = 'expense') AS expense_total
 FROM public.transactions
-WHERE user_id = (SELECT id FROM auth.users WHERE email = 'ferdiputra1404@gmail.com')
+WHERE user_id = (SELECT id FROM auth.users WHERE email = 'your-email@example.com')
 GROUP BY 1
 ORDER BY 1;
