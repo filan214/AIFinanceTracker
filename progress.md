@@ -141,8 +141,7 @@ Quality gates: **177 tests pass**, typecheck and lint are clean at `fd259fd`,
 re-run 2026-11-05. Build and en/id i18n parity were last run for item 14. Every new API route
 was checked live; full Chrome click-through of all 5 pending UI fixes done
 on production 2026-09-29 (see `handoff.md`) — all PASS. A second real
-account (`ferdiputra1404@gmail.com`) now exists on prod, useful for future
-multi-user testing.
+account now exists on prod, useful for future multi-user testing.
 
 ## Key decisions
 
